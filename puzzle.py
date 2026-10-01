@@ -61,3 +61,20 @@ class Swap(Transformation):
     @property
     def restore_cost(self):
         return 1
+    
+class Rotate(Transformation):
+    def __init__(self, index, quarter_turns = 1):
+        self.index = index
+        self.turns = quarter_turns
+        
+    def apply(self, puzzle):
+        puzzle.tiles[self.index].rotate(self.turns)
+        
+    def undo(self, puzzle):
+        puzzle.tiles[self.index].rotate(-self.turns)
+    
+    @property
+    def restore_cost(self):
+        return (4 - self.turns % 4) % 4 #Assuming a 4-tile cycle
+    
+    
