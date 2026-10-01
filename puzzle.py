@@ -117,3 +117,79 @@ def make_scramble_plan(grid_size):
     return plan
 
 
+#MAIN GAME LOGiC INTEGRATION
+class Puzzle:
+    def __init__(self, tile_images, grid_size):
+        self._grid_size = grid_size
+        self._tiles = [Tile(img, i) for i, img in enumerate(tile_images)]
+        self._scramble = []
+        self._player_moves = []
+        self._par_moves = 0
+        self._scramble_tiles()
+
+    def _scramble_tiles(self):
+        self._scramble = make_scramble_plan(self._grid_size)
+        for t in self._scramble:
+            t.apply(self)
+        self._par_moves = sum(t.restore_cost for t in self._scramble)
+
+    @property
+    def tiles(self):
+        return self._tiles
+
+    @property
+    def grid_size(self):
+        return self._grid_size
+
+    @property
+    def moves(self):
+        return len(self._player_moves)
+
+    @property
+    def par_moves(self):
+        return self._par_moves
+
+    def swap_tiles(self, i, j):          # used internally by Swap
+        self._tiles[i], self._tiles[j] = self._tiles[j], self._tiles[i]
+
+    def _do(self, transformation):
+        transformation.apply(self)
+        self._player_moves.append(transformation)
+
+    ### --- Methods Himanshu's GameplayManager calls --- ###
+    def swap(self, i, j):
+        self._do(Swap(i, j))
+
+    def rotate(self, i):
+        self._do(Rotate(i, 1))
+
+    def flip(self, i):
+        self._do(Flip(i, True))
+
+    def is_correct(self, position):
+        tile = self._tiles[position]
+        return tile.home_index == position and tile.is_upright()
+
+    def incorrect_positions(self):
+        return [p for p in range(len(self._tiles)) if not self.is_correct(p)]
+
+    def incorrect_count(self):
+        return len(self.incorrect_positions())
+
+    def is_solved(self):
+        return self.incorrect_count() == 0
+
+    def hint_target(self):
+        #(position on puzzle, home position on original), or None if already solved
+        wrong = self.incorrect_positions()
+        if not wrong:
+            return None
+        position = random.choice(wrong)
+        return position, self._tiles[position].home_index
+
+    def solve(self):
+        # undo newest first: player moves, then the scramble
+        for t in reversed(self._scramble + self._player_moves):
+            t.undo(self)
+        self._player_moves.clear()
+        self._scramble.clear()
