@@ -270,6 +270,70 @@ class GameplayManager:
 
         return True
 
+    def handle_swap(self, puzzle, first_index, second_index):
+        if self.game_finished:
+          return False
+
+        puzzle.swap(first_index, second_index)
+
+        self.add_move()
+
+        self.selected_tile = None
+
+        return True
+
+    def handle_rotate(self, puzzle, tile_index):
+        """
+        Rotate one tile clockwise.
+
+        Rotation counts as one move.
+        """
+
+        if self.game_finished:
+            return False
+
+        puzzle.rotate(tile_index)
+
+        self.add_move()
+
+        return True
+
+    def handle_flip(self, puzzle, tile_index):
+        """
+        Flip one tile horizontally.
+
+        Flipping counts as one move.
+        """
+
+        if self.game_finished:
+            return False
+
+        puzzle.flip(tile_index)
+
+        self.add_move()
+
+        return True
+
+    def get_tiles_left(self, puzzle):
+        """Return the number of tiles that are still incorrect."""
+
+        return puzzle.incorrect_count()
+
+    def check_puzzle_complete(self, puzzle):
+        """
+        Check whether the puzzle has been solved.
+
+        If solved, finish the game and save the score.
+        """
+
+        if puzzle.is_solved():
+
+            self.finish_game()
+
+            return True
+
+        return False
+
     def get_moves(self):
         return self.moves
 
