@@ -93,3 +93,27 @@ class Flip(Transformation):
         # the player can only flip horizontally, so a vertical flip
         # takes 1 flip + 2 rotations to undo
         return 1 if self.horizontal else 3
+    
+
+# SCRAMBLING
+def make_scramble_plan(grid_size):
+    swaps, rots, flips = SCRAMBLE_PLAN[grid_size]
+    n = grid_size * grid_size
+    
+    # Each swap consumes 2 unique indices; each rotate/flip consumes 1
+    pool = random.sample(range(n), 2 * swaps + rots + flips)   # all unique
+
+    # First 2*swaps indices are paired up into Swap operations.
+    plan = [Swap(pool[2 * k], pool[2 * k + 1]) for k in range(swaps)]
+
+    # next 'rots' become Rotate (random quarter-turn direction 1-3)
+    # last 'flips' become Flip (on a random axis) 
+    rest = pool[2 * swaps:]
+    plan += [Rotate(i, random.choice([1, 2, 3])) for i in rest[:rots]]
+    plan += [Flip(i, random.choice([True, False])) for i in rest[rots:]]
+
+    #Shuffle so the player can't predict which type comes first
+    random.shuffle(plan)
+    return plan
+
+
