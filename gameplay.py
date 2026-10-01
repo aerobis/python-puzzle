@@ -2,11 +2,12 @@
 HIT137 Assignment 3
 Part 4 - Gameplay, Moves and Score
 
-This class keeps track of the player's gameplay information
-and the rules for each difficulty level.
+Handles gameplay state, difficulty rules and score saving.
 """
 
 import time
+import json
+import os
 
 
 class GameplayManager:
@@ -19,31 +20,32 @@ class GameplayManager:
         self.selected_tile = None
         self.game_finished = False
 
-        # Difficulty settings
+        # Difficulty information
         self.difficulty = difficulty
         self.grid_size = grid_size
 
-        # Medium difficulty timer
+        # Medium timer
         self.start_time = None
         self.time_limit = None
 
-        # Hard difficulty move restriction
+        # Hard move restriction
         self.move_limit = None
+
+        # File used to save completed scores
+        self.score_file = "scores.json"
 
         self.setup_difficulty()
 
     def setup_difficulty(self):
-        """Set the rules depending on the selected difficulty."""
+        """Set the rules for the selected difficulty."""
 
         if self.difficulty == "Easy":
 
-            # Easy mode has no time or move restriction
             self.time_limit = None
             self.move_limit = None
 
         elif self.difficulty == "Medium":
 
-            # Larger puzzles are given more time
             time_limits = {
                 3: 120,
                 4: 240,
@@ -56,9 +58,6 @@ class GameplayManager:
 
         elif self.difficulty == "Hard":
 
-            # Temporary move limits.
-            # These can be adjusted later after integration
-            # with the final puzzle scrambling system.
             move_limits = {
                 3: 20,
                 4: 35,
@@ -69,14 +68,13 @@ class GameplayManager:
             self.time_limit = None
 
         else:
-            # If an invalid difficulty is received,
-            # use Easy as a safe default.
+
             self.difficulty = "Easy"
             self.time_limit = None
             self.move_limit = None
 
     def reset_game(self):
-        """Reset all values when a new puzzle starts."""
+        """Reset gameplay values for a new puzzle."""
 
         self.moves = 0
         self.hints_left = 3
@@ -86,7 +84,7 @@ class GameplayManager:
         self.setup_difficulty()
 
     def select_tile(self, tile_index):
-        """Select or deselect a puzzle tile."""
+        """Select a tile or deselect it when clicked again."""
 
         if self.game_finished:
             return None
@@ -100,7 +98,7 @@ class GameplayManager:
         return self.selected_tile
 
     def add_move(self):
-        """Add one move after a valid puzzle action."""
+        """Count one valid puzzle action."""
 
         if self.game_finished:
             return self.moves
@@ -110,7 +108,7 @@ class GameplayManager:
         return self.moves
 
     def use_hint(self):
-        """Use one of the three available hints."""
+        """Use one hint if one is available."""
 
         if self.game_finished:
             return False
@@ -123,32 +121,25 @@ class GameplayManager:
         return True
 
     def get_time_left(self):
-        """Return the remaining time for Medium difficulty."""
+        """Return remaining Medium difficulty time."""
 
         if self.difficulty != "Medium":
             return None
 
-        if self.start_time is None:
-            return self.time_limit
-
         elapsed = int(time.time() - self.start_time)
 
-        remaining = self.time_limit - elapsed
-
-        return max(0, remaining)
+        return max(0, self.time_limit - elapsed)
 
     def get_moves_left(self):
-        """Return the remaining moves for Hard difficulty."""
+        """Return remaining Hard difficulty moves."""
 
         if self.difficulty != "Hard":
             return None
 
-        remaining = self.move_limit - self.moves
-
-        return max(0, remaining)
+        return max(0, self.move_limit - self.moves)
 
     def time_is_up(self):
-        """Check whether the Medium timer has expired."""
+        """Return True when Medium mode has run out of time."""
 
         if self.difficulty != "Medium":
             return False
@@ -156,60 +147,148 @@ class GameplayManager:
         return self.get_time_left() <= 0
 
     def moves_are_up(self):
-        """Check whether the Hard move allowance has been used."""
+        """Return True when Hard mode has no moves remaining."""
 
         if self.difficulty != "Hard":
             return False
 
         return self.get_moves_left() <= 0
 
+    def calculate_result(self):
+        """Create a score based on the current difficulty."""
+
+        if self.difficulty == "Easy":
+
+            return {
+                "grid": self.grid_size,
+                "moves": self.moves
+            }
+
+        elif self.difficulty == "Medium":
+
+            elapsed = int(time.time() - self.start_time)
+
+            return {
+                "grid": self.grid_size,
+                "time": elapsed,
+                "moves": self.moves
+            }
+
+        elif self.difficulty == "Hard":
+
+            return {
+                "grid": self.grid_size,
+                "moves_left": self.get_moves_left(),
+                "moves_used": self.moves
+            }
+
+    def load_scores(self):
+        """Load previous scores from scores.json."""
+
+        empty_scores = {
+            "Easy": [],
+            "Medium": [],
+            "Hard": []
+        }
+
+        if not os.path.exists(self.score_file):
+            return empty_scores
+
+        try:
+
+            with open(self.score_file, "r", encoding="utf-8") as file:
+                scores = json.load(file)
+
+            # Make sure all three difficulty lists exist
+            for difficulty in empty_scores:
+
+                if difficulty not in scores:
+                    scores[difficulty] = []
+
+            return scores
+
+        except (json.JSONDecodeError, OSError):
+
+            return empty_scores
+
+    def sort_scores(self, scores):
+        """Sort and keep the five best scores for each difficulty."""
+
+        # Easy: fewer moves is better
+        scores["Easy"].sort(
+            key=lambda result: result.get("moves", 999999)
+        )
+
+        # Medium: less time is better
+        scores["Medium"].sort(
+            key=lambda result: result.get("time", 999999)
+        )
+
+        # Hard: more remaining moves is better
+        scores["Hard"].sort(
+            key=lambda result: result.get("moves_left", -1),
+            reverse=True
+        )
+
+        scores["Easy"] = scores["Easy"][:5]
+        scores["Medium"] = scores["Medium"][:5]
+        scores["Hard"] = scores["Hard"][:5]
+
+    def save_score(self):
+        """Save the current completed result."""
+
+        scores = self.load_scores()
+
+        result = self.calculate_result()
+
+        scores[self.difficulty].append(result)
+
+        self.sort_scores(scores)
+
+        try:
+
+            with open(self.score_file, "w", encoding="utf-8") as file:
+                json.dump(scores, file, indent=4)
+
+            return True
+
+        except OSError:
+
+            return False
+
     def finish_game(self):
-        """Mark the puzzle as completed."""
+        """Finish the puzzle and save the result."""
+
+        # Prevent the same completed puzzle being saved twice
+        if self.game_finished:
+            return False
 
         self.game_finished = True
         self.selected_tile = None
 
-    def get_moves(self):
-        """Return the number of moves used."""
+        self.save_score()
 
+        return True
+
+    def get_moves(self):
         return self.moves
 
     def get_hints_left(self):
-        """Return the number of hints remaining."""
-
         return self.hints_left
 
 
 # Testing only
 if __name__ == "__main__":
 
-    print("----- EASY TEST -----")
+    game = GameplayManager("Easy", 3)
 
-    easy_game = GameplayManager("Easy", 3)
+    game.add_move()
+    game.add_move()
+    game.add_move()
 
-    easy_game.add_move()
-    easy_game.add_move()
+    print("Moves before finishing:", game.get_moves())
 
-    print("Difficulty:", easy_game.difficulty)
-    print("Moves:", easy_game.get_moves())
-    print("Time limit:", easy_game.time_limit)
-    print()
+    game.finish_game()
 
-    print("----- MEDIUM TEST -----")
-
-    medium_game = GameplayManager("Medium", 4)
-
-    print("Difficulty:", medium_game.difficulty)
-    print("Time left:", medium_game.get_time_left())
-    print()
-
-    print("----- HARD TEST -----")
-
-    hard_game = GameplayManager("Hard", 3)
-
-    hard_game.add_move()
-    hard_game.add_move()
-
-    print("Difficulty:", hard_game.difficulty)
-    print("Moves used:", hard_game.get_moves())
-    print("Moves left:", hard_game.get_moves_left())
+    print("Game finished:", game.game_finished)
+    print("Score saved to scores.json")
