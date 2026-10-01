@@ -53,7 +53,7 @@ class Swap(Transformation):
         self.j = j
     
     def apply(self, puzzle):
-        puzzle.swap_tiles(self. i, self, j)
+        puzzle.swap_tiles(self. i, self.j)
         
     def undo(self, puzzle):
         puzzle.swap_tiles(self.i, self.j)
