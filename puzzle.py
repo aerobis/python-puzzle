@@ -77,4 +77,19 @@ class Rotate(Transformation):
     def restore_cost(self):
         return (4 - self.turns % 4) % 4 #Assuming a 4-tile cycle
     
-    
+class Flip(Transformation):
+    def __init__(self, index, horizontal=True):
+        self.index = index
+        self.horizontal = horizontal
+
+    def apply(self, puzzle):
+        puzzle.tiles[self.index].flip(self.horizontal)
+
+    def undo(self, puzzle):
+        puzzle.tiles[self.index].flip(self.horizontal)
+
+    @property
+    def restore_cost(self):
+        # the player can only flip horizontally, so a vertical flip
+        # takes 1 flip + 2 rotations to undo
+        return 1 if self.horizontal else 3
