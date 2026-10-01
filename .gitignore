@@ -1,0 +1,9 @@
+# Player results are generated while playing
+scores.json
+
+# Python generated cache files
+__pycache__/
+*.pyc
+
+# Local VS Code settings
+.vscode/
