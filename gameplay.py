@@ -129,6 +129,22 @@ class GameplayManager:
         elapsed = int(time.time() - self.start_time)
 
         return max(0, self.time_limit - elapsed)
+    def set_hard_move_limit(self, estimated_minimum_moves):
+        """ Set the Hard difficulty move allowance after the puzzle
+        has been scrambled. A small extra allowance is added so the player does not have to solve the puzzle perfectly."""
+
+        if self.difficulty != "Hard":
+            return
+
+        extra_moves = {
+            3: 8,
+            4: 12,
+            5: 18
+        }
+
+        allowance = extra_moves.get(self.grid_size, 8)
+
+        self.move_limit = estimated_minimum_moves + allowance
 
     def get_moves_left(self):
         """Return remaining Hard difficulty moves."""
