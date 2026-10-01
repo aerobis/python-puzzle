@@ -6,7 +6,7 @@ import numpy as np
 
 SCRAMBLE_PLAN = {3: (2, 2, 2), 4: (4, 4, 4), 5: (5, 8, 7)};
 
-class Title:
+class Tile:
     def __init__(self, image, home_index):
         self._original = image
         self._image = image.copy()
@@ -32,4 +32,18 @@ class Title:
         
     def is_upright(self):
         return np.array_equal(self._image, self._original)
+    
+class Transformation(ABC):
+    @abstractmethod
+    def apply(self, puzzle):
+        pass
+    
+    @abstractmethod
+    def undo(self, puzzle):
+        pass
+    
+    @property
+    @abstractmethod
+    def restore_cost(self, puzzle):
+        pass
     
