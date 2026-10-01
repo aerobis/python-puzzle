@@ -1,23 +1,28 @@
 """
 HIT137 Assignment 3
-Part 4 - Puzzle Gameplay, Moves and Score
+Part 4 - Gameplay, Moves and Score
 
-This file handles the gameplay state.
-The GUI will call these methods when the player makes a move.
+This class keeps track of the player's gameplay information.
 """
 
 
 class GameplayManager:
 
     def __init__(self):
-        # Basic round information
+        # Number of moves made by the player
         self.moves = 0
+
+        # Assignment allows a maximum of 3 hints
         self.hints_left = 3
+
+        # Stores the tile currently selected by the player
         self.selected_tile = None
+
+        # Used to stop actions after the puzzle is completed
         self.game_finished = False
 
     def reset_game(self):
-        """Reset the gameplay values for a new puzzle."""
+        """Reset all gameplay values for a new puzzle."""
 
         self.moves = 0
         self.hints_left = 3
@@ -25,37 +30,32 @@ class GameplayManager:
         self.game_finished = False
 
     def select_tile(self, tile_index):
-        """
-        Store the first tile selected by the player.
-
-        If the same tile is clicked again, it is deselected.
-        """
+        """Select or deselect a puzzle tile."""
 
         if self.game_finished:
             return None
 
+        # Clicking the selected tile again deselects it
         if self.selected_tile == tile_index:
             self.selected_tile = None
             return None
 
         self.selected_tile = tile_index
-        return tile_index
+
+        return self.selected_tile
 
     def add_move(self):
-        """Increase the move counter after a valid puzzle action."""
+        """Add one move after a valid swap, rotation or flip."""
 
-        if not self.game_finished:
-            self.moves += 1
+        if self.game_finished:
+            return self.moves
+
+        self.moves += 1
 
         return self.moves
 
     def use_hint(self):
-        """
-        Use one of the three available hints.
-
-        Returns True if a hint can be used.
-        Returns False when no hints remain.
-        """
+        """Use one hint if the player still has hints available."""
 
         if self.game_finished:
             return False
@@ -64,33 +64,42 @@ class GameplayManager:
             return False
 
         self.hints_left -= 1
+
         return True
 
     def finish_game(self):
-        """Lock the current puzzle when it has been completed."""
+        """Mark the puzzle as completed and stop further input."""
 
         self.game_finished = True
         self.selected_tile = None
 
     def get_moves(self):
+        """Return the current move count."""
+
         return self.moves
 
     def get_hints_left(self):
+        """Return the number of hints remaining."""
+
         return self.hints_left
 
 
+# This section is only for testing this file by itself
 if __name__ == "__main__":
-    # Small test for this file only.
+
     game = GameplayManager()
 
-    print("Moves:", game.get_moves())
-    print("Hints:", game.get_hints_left())
+    print("Starting moves:", game.get_moves())
+    print("Starting hints:", game.get_hints_left())
 
     game.select_tile(2)
+
     print("Selected tile:", game.selected_tile)
 
     game.add_move()
-    print("Moves after action:", game.get_moves())
+
+    print("Moves after one action:", game.get_moves())
 
     game.use_hint()
-    print("Hints after using one:", game.get_hints_left())
+
+    print("Hints after one hint:", game.get_hints_left())
