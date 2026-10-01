@@ -47,3 +47,17 @@ class Transformation(ABC):
     def restore_cost(self, puzzle):
         pass
     
+class Swap(Transformation):
+    def __init__(self, i, j):
+        self.i = i
+        self.j = j
+    
+    def apply(self, puzzle):
+        puzzle.swap_tiles(self. i, self, j)
+        
+    def undo(self, puzzle):
+        puzzle.swap_tiles(self.i, self.j)
+        
+    @property
+    def restore_cost(self):
+        return 1
