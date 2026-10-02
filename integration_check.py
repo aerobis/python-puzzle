@@ -1,5 +1,4 @@
 import sys
-import os
 import cv2
 import numpy as np
 from image_processor import ImageProcessor, BOARD_SIZE
@@ -15,7 +14,7 @@ for n in (3, 4, 5):
     puzzle = Puzzle(proc.get_tile_images(), n)
      
      # ensure the newly created puzzle starts in an unresolved (scrambled) state
-    assert not puzzle.is_solved 
+    assert not puzzle.is_solved()
      
      # reconstruct and save the scrambled image using the current tile configuration
     scrambled = ImageProcessor.assemble([t.image for t in puzzle.tiles], n)
