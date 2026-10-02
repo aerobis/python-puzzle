@@ -14,7 +14,7 @@ class ImageProcessor:
         self.load_image()
 
     def load_image(self):
-        ext = os.path.splittext(self.image_path)[1].lower() #Standardize text to check extensions
+        ext = os.path.splitext(self.image_path)[1].lower() #Standardize text to check extensions
         if ext not in SUPPORTED_EXTENSIONS:
             raise ValueError("Unsupported file type: " + ext)
         
