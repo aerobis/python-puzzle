@@ -61,4 +61,9 @@ class ImageProcessor:
         # vertically stack all completed rows to form the final image
         return np.vstack(rows)
 
-    
+    @staticmethod
+    def to_png_bytes(img):
+        #png bytes for tkinter.PhotoImage(data = ...), no pillow needed.abs
+        ok, buffer = cv2.imencode(".png", png)
+        if not ok:
+            raise ValueError("Could not encode image")
