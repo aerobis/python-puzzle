@@ -51,6 +51,14 @@ class ImageProcessor:
         
         return tiles
     
-    
+    @staticmethod
+    def assemble(tiles, grid_size):
+        #rebuild one image from tiles in a row major order
+        rows = []
+        for r in range(grid_size):
+            # extract the tiles for the current row and horizontally stack them
+            rows.append(np.hstack(tiles[r * grid_size: (r + 1) * grid_size]))
+        # vertically stack all completed rows to form the final image
+        return np.vstack(rows)
 
     
