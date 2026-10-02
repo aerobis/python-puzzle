@@ -100,3 +100,5 @@ if __name__ == "__main__":
     cv2.imwrite('scrambled_test.png', scrambled_img)
     
     print("Done scrambling and saved as 'scrambled_test.png'!")
+   # ready for review
+    
