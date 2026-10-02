@@ -36,6 +36,21 @@ class ImageProcessor:
         left = (new_w - BOARD_SIZE) // 2
         self.original_img = resized[top: top + BOARD_SIZE, left: left + BOARD_SIZE].copy()
 
+    def get_original_image(self):
+        return self.original_image.copy()
+    
+    def get_tile_images(self):
+        #unscrambled tiles, row by row. pass these to Puzzle(tiles, grid_size)
+        n = self.grid_size
+        side = BOARD_SIZE // n
+        tiles = []
+        for r in range(n):
+            for c in range(n):
+                piece = self.original_img[r * side:(r + 1) * side, c * side: (c + 1) * side]
+                tiles.append(piece.copy())
+        
+        return tiles
+    
     def split_tiles(self):
         h, w, _ = self.original_img.shape
         th = h // self.grid_size
