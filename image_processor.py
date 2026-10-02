@@ -38,7 +38,7 @@ class ImageProcessor:
         self.original_img = resized[top: top + BOARD_SIZE, left: left + BOARD_SIZE].copy()
 
     def get_original_image(self):
-        return self.original_image.copy()
+        return self.original_img.copy()
     
     def get_tile_images(self):
         #unscrambled tiles, row by row. pass these to Puzzle(tiles, grid_size)
