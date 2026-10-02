@@ -63,7 +63,8 @@ class ImageProcessor:
 
     @staticmethod
     def to_png_bytes(img):
-        #png bytes for tkinter.PhotoImage(data = ...), no pillow needed.abs
-        ok, buffer = cv2.imencode(".png", png)
+        #png bytes for tkinter.PhotoImage(data = ...), no pillow needed
+        ok, buffer = cv2.imencode(".png", img)
         if not ok:
             raise ValueError("Could not encode image")
+        return buffer.tobytes()
