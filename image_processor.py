@@ -1,6 +1,7 @@
 import cv2
 import numpy as np
 import random
+import os
 
 SUPPORTED_EXTENSIONS = (".jpg", ".jpeg", ".png", ".bmp")
 BOARD_SIZE = 480 #So it's divisible by 3, 5 and 5, meaning every grid will be split into exact squares
