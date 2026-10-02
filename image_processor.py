@@ -9,23 +9,32 @@ class ImageProcessor:
     def __init__(self, image_path, grid_size=3):
         self.image_path = image_path
         self.grid_size = grid_size
-        self.tiles = []
+        self.original_img = None
         self.load_image()
 
     def load_image(self):
-        # load the image and fix dimensions so it chops up evenly
-        img = cv2.imread(self.image_path)
+        ext = os.path.splittext(self.image_path)[1].lower() #Standardize text to check extensions
+        if ext not in SUPPORTED_EXTENSIONS:
+            raise ValueError("Unsupported file type: " + ext)
+        
+        #fromfile + imdecode also work for paths with special characters 
+        data = np.fromfile(self.image_path, dtype = np.uint8)
+        img = cv2.imdecode(data, cv2.IMREAD_COLOR)
         if img is None:
-            raise ValueError(f"OpenCV couldn't find or read the image at: {self.image_path}. Check if it's synced locally!")
+            raise ValueError("Could not read image: " + self.image_path)
         
-        h, w, _ = img.shape
+        #resize keeping aspect ratio (shorter side will be BOARD_SIZE),
+        #and then center crop to a square
+        h, w = img.shape[:2]
+        scale = BOARD_SIZE / min(h, w)
+        new_w = max(BOARD_SIZE, round (w * scale))
+        new_h = max(BOARD_SIZE, round(h * scale))
+        interp = cv2.INTER_AREA if scale < 1 else cv2.INTER_LINEAR
+        resized = cv2.resize(img, (new_w, new_h), interpolation=interp)
         
-        new_h = (h // self.grid_size) * self.grid_size
-        new_w = (w // self.grid_size) * self.grid_size
-        self.original_img = cv2.resize(img, (new_w, new_h))
-        
-        self.split_tiles()
-        
+        top = (new_h - BOARD_SIZE) // 2
+        left = (new_w - BOARD_SIZE) // 2
+        self.original_img = resized[top: top + BOARD_SIZE, left: left + BOARD_SIZE].copy()
 
     def split_tiles(self):
         h, w, _ = self.original_img.shape
