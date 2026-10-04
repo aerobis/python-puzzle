@@ -120,7 +120,7 @@ class PuzzleGUI:
             if self.difficulty.get() == "Hard":
                 self.set_moves_left(str(self.gameplay.get_moves_left()))
 
-            self.tiles_left_var.set(str(self.puzzle.incorrect_count()))
+            self.set_tiles_left(self.puzzle.incorrect_count())
             self.moves_var.set("0")
 
             self.hints_used = 0
@@ -216,7 +216,7 @@ class PuzzleGUI:
             if self.difficulty.get() == "Hard":
                 self.set_moves_left(str(self.gameplay.get_moves_left()))
 
-            self.tiles_left_var.set(str(self.puzzle.incorrect_count()))
+            self.set_tiles_left(self.puzzle.incorrect_count())
             self.moves_var.set("0")
 
             self.hints_used = 0
@@ -496,7 +496,7 @@ class PuzzleGUI:
         self.moves_var.set("0")
 
         self.current_tiles = self.puzzle.tiles
-        self.tiles_left_var.set("0")
+        self.set_tiles_left("0")
 
         # Display the completed puzzle
         self.display_tiles(self.current_tiles)
@@ -853,9 +853,13 @@ class PuzzleGUI:
             self.moves_left_var.set("--")
             self.set_tiles_left(0)
 
-        # Registered in this order: reset first, then rebuild the puzzle
-        self.difficulty.trace_add("write", reset_mode_stats)
-        self.difficulty.trace_add("write", lambda *args: self.change_grid())
+        # One callback, so the order is always: reset first, then rebuild
+        def on_difficulty_change(*args):
+            reset_mode_stats()
+            self.change_grid()
+
+        self.difficulty.trace_add("write", on_difficulty_change)
+        
         # Frame To Hold Both Images
         self.image_frame = tk.Frame(self.main_frame)
         self.image_frame.pack(pady = 0)
