@@ -33,6 +33,7 @@ class PuzzleGUI:
 
         self.scoreboard = Scoreboard()
         self.score_saved = False
+        self.original_hidden = False
 
         # Background Colour
         self.root.config(bg = "#10072B")
@@ -656,7 +657,7 @@ class PuzzleGUI:
             corner_radius = 15,
             width = 240,
             height = 85,
-   )
+        )
         self.difficulty_box.pack(side = "left", padx = (5, 0))
         self.difficulty_box.pack_propagate(False)
 
@@ -894,7 +895,10 @@ class PuzzleGUI:
         )
         self.original_hint_canvas.pack()
 
-        # Upoad Image button
+        # Upoad/Hide image buttons
+        self.left_button_frame = tk.Frame(self.left_frame, bg = "#10072B")
+        self.left_button_frame.pack(pady = (25, 0))
+        
         self.load_button = ctk.CTkButton(
             self.left_frame,
             text = "Upload Image (JPG, PNG, BMP)",
@@ -908,12 +912,27 @@ class PuzzleGUI:
             width = self.canvas_size,
             height = 50 
         )
-        self.load_button.pack(pady = (25, 0))
+        self.load_button.pack(side="left", padx = 10)
+        
+        self.hide_button = ctk.CTkButton(
+            self.left_button_frame,
+            text = "Hide Original Image",
+            command = self.toggle_original,
+            state = "disabled"
+            font = ("Arial", 16, "bold"),
+            text_color = "#DCC8F5",
+            fg_color = "#8A2BE2",
+            hover_color = "#DC0FE3",
+            width = 255,
+            height = 50
+        )
+        
+        self.hide_button.pack(side="right", padx=10)
 
         # Puzzle Image Frame On The Right
         self.right_frame = tk.Frame(self.image_frame)
         self.right_frame.pack(side = "right", 
-                        padx = (15, 0) 
+                        padx = (15, 0),
                         anchor = "n")
         self.right_frame.config(
             bg = "#10072B"
@@ -995,7 +1014,7 @@ class PuzzleGUI:
             text_color = "#DCC8F5",
             fg_color = "#8A2BE2",
             hover_color = "#DC0FE3",
-            width = 233,
+            width = 240,
             height = 50
         )
 
@@ -1070,6 +1089,38 @@ class PuzzleGUI:
 
     def set_moves_left(self, value):
         self.moves_left_var.set(value)
+
+    # Hide or Show the original image (Extra difficulty)
+    def toggle_original(self):
+        if self.image_processor is None:
+            return
+        else:
+            self.set_original_hidden(not self.original_hidden);
+            
+    def set_original_hidden(self, hidden):
+        self.original_hidden = hidden
+        self.original_hint_canvas.delete("cover")
+
+        if hidden:
+            size = self.canvas_size + 10
+            self.original_hint_canvas.create_rectangle(
+                0, 0, size, size,
+                fill = "#10072B", outline = "", tags = "cover"
+            )
+            
+            self.original_hint_canvas.create_text(
+                size / 2, size / 2,
+                text = "Original Image Hidden",
+                fill = "#DCC8F5",
+                font = ("Didot", 22, "bold"),
+                tags = "cover"
+            )
+            # Keep the hint circles visible on top of the cover
+            self.original_hint_canvas.tag_raise("hint")
+            self.hide_button.configure(text="Show Original Image")
+        else:
+            self.hide_button.configure(text="Hide Original Image")
+        
 
     def run(self):
         self.root.mainloop()
