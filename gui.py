@@ -650,7 +650,7 @@ class PuzzleGUI:
         self.top_frame = tk.Frame(
             self.main_frame,
             bg = "#10072B")
-        self.top_frame.pack(anchor = "w", padx = 20, pady = 10)
+        self.top_frame.pack(pady = 10)
 
         # Frame for Difficulty and Grid Size Slectors
         self.selector_frame = tk.Frame(self.top_frame, 
@@ -761,8 +761,11 @@ class PuzzleGUI:
             width = 486,
             height = 85,
         )
-        self.progress_frame.pack(side = "left", padx = (20, 0))
+        self.progress_frame.pack(side = "left", padx = (30, 0))
         self.progress_frame.grid_propagate(False)
+        for col in (0, 2, 4, 6):
+            self.progress_frame.grid_columnconfigure(col, weight = 1)
+        self.progress.frame.grid_rowconfigure(0, weight = 1)
 
         # Top Right Row
         # Progress Value
@@ -779,7 +782,7 @@ class PuzzleGUI:
                 fg_color = "#DCC8F5",
             )
 
-            section.grid(row = 0, column = column, padx = 30, pady = 12)
+            section.grid(row = 0, column = column, padx = 10, pady = 8)
 
             ctk.CTkLabel(
                 section,
