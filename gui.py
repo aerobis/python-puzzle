@@ -771,7 +771,7 @@ class PuzzleGUI:
         self.progress_frame.grid_propagate(False)
         for col in (0, 2, 4, 6):
             self.progress_frame.grid_columnconfigure(col, weight = 1)
-        self.progress.frame.grid_rowconfigure(0, weight = 1)
+        self.progress_frame.grid_rowconfigure(0, weight = 1)
 
         # Top Right Row
         # Progress Value
@@ -839,7 +839,7 @@ class PuzzleGUI:
         self.last_divider = add_divider(self.progress_frame, 5)
 
         # Update Progress Display Based on Difficulty
-         def update_progress_display(*args):
+        def update_progress_display(*args):
             self.time_section.grid_remove()
             self.moves_left_section.grid_remove()
             self.last_divider.grid_remove()
