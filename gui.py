@@ -135,6 +135,10 @@ class PuzzleGUI:
                 image = photo
             )
             self.original_hint_canvas.image = photo
+            
+            # For Hidden/Non-hidden states
+            self.set_original_hidden(False)
+            self.hide_button.configure(state="normal")
 
             # Enable The Hint Button
             self.hint_button.configure(state = "normal", text = "Hint (0/3)")
@@ -305,6 +309,7 @@ class PuzzleGUI:
             self.save_game_result()
             self.hint_button.configure(state="disabled")
             self.solve_button.configure(state="disabled")
+            self.set_original_hidden(False)
             self.root.after(100, lambda: messagebox.showinfo(
                 "Puzzle Completed!",
                 "Congratulations! You solved the puzzle!"))
@@ -480,6 +485,9 @@ class PuzzleGUI:
 
         # Display the completed puzzle
         self.display_tiles(self.current_tiles)
+        
+        # Set original image's default state to non-hidden
+        self.set_original_hidden(False)
 
         # Remove The Circles
         self.original_hint_canvas.delete("hint")
@@ -918,7 +926,7 @@ class PuzzleGUI:
             self.left_button_frame,
             text = "Hide Original Image",
             command = self.toggle_original,
-            state = "disabled"
+            state = "disabled",
             font = ("Arial", 16, "bold"),
             text_color = "#DCC8F5",
             fg_color = "#8A2BE2",
