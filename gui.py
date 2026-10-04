@@ -903,13 +903,13 @@ class PuzzleGUI:
         )
         self.original_hint_canvas.pack()
 
-        # Upoad/Hide image buttons
+        # Upload / Hide buttons under the original image
         self.left_button_frame = tk.Frame(self.left_frame, bg = "#10072B")
         self.left_button_frame.pack(pady = (25, 0))
-        
+
         self.load_button = ctk.CTkButton(
-            self.left_frame,
-            text = "Upload Image (JPG, PNG, BMP)",
+            self.left_button_frame,
+            text = "Upload Image",
             command = self.load_image,
             font = ("Arial", 16, "bold"),
             text_color = "#8A2BE2",
@@ -917,11 +917,11 @@ class PuzzleGUI:
             border_width = 2,
             border_color = "#F4E8FF",
             hover_color = "#DC0FE3",
-            width = self.canvas_size,
-            height = 50 
+            width = 215,
+            height = 50
         )
-        self.load_button.pack(side="left", padx = 10)
-        
+        self.load_button.pack(side = "left", padx = 15)
+
         self.hide_button = ctk.CTkButton(
             self.left_button_frame,
             text = "Hide Original Image",
@@ -931,11 +931,10 @@ class PuzzleGUI:
             text_color = "#DCC8F5",
             fg_color = "#8A2BE2",
             hover_color = "#DC0FE3",
-            width = 255,
+            width = 215,
             height = 50
         )
-        
-        self.hide_button.pack(side="right", padx=10)
+        self.hide_button.pack(side = "left", padx = 15)
 
         # Puzzle Image Frame On The Right
         self.right_frame = tk.Frame(self.image_frame)
@@ -993,10 +992,10 @@ class PuzzleGUI:
             border_width = 2,
             border_color = "#F4E8FF",
             hover_color = "#DC0FE3",
-            width = 240,
+            width = 215,
             height = 50
         )
-        self.hint_button.pack(side = "left", padx = 10)
+        self.hint_button.pack(side = "left", padx = 15)
 
         self.solve_button = ctk.CTkButton(
             self.button_frame,
@@ -1007,10 +1006,10 @@ class PuzzleGUI:
             text_color = "#DCC8F5",
             fg_color = "#8A2BE2",
             hover_color = "#DC0FE3",
-            width = 240,
+            width = 215,
             height = 50
         )
-        self.solve_button.pack(side = "right", padx = 10)
+        self.solve_button.pack(side = "right", padx = 15)
 
 
         # Scoreboard Button - Himanshu Part
