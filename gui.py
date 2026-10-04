@@ -1,13 +1,17 @@
 import cv2
+import time
 import tkinter as tk
 import customtkinter as ctk
-
 from tkinter import filedialog
 from tkinter import messagebox
 from image_processor import ImageProcessor
 from puzzle import Puzzle
 from gameplay import GameplayManager
 from scoreboard import Scoreboard
+
+# Hard mode count-down in seconds. Copy the medium numbers from
+# time_limits in gameplay.py's setup_difficulty so the two match up
+HARD_TIME_LIMITS = {3: 120, 4: 240, 5: 420}
 
 class PuzzleGUI:
     def __init__(self):
@@ -111,6 +115,10 @@ class PuzzleGUI:
 
             if self.difficulty.get() == "Hard":
                 self.set_moves_left(str(self.gameplay.get_moves_left()))
+                self.start_hard_timer()
+
+            if self.difficulty.get() == "Hard":
+                self.set_moves_left(str(self.gameplay.get_moves_left()))
 
             self.tiles_left_var.set(str(self.puzzle.incorrect_count()))
             self.moves_var.set("0")
@@ -200,6 +208,10 @@ class PuzzleGUI:
 
             if self.difficulty.get() == "Medium":
                 self.update_timer()
+
+            if self.difficulty.get() == "Hard":
+                self.set_moves_left(str(self.gameplay.get_moves_left()))
+                self.start_hard_timer()
 
             if self.difficulty.get() == "Hard":
                 self.set_moves_left(str(self.gameplay.get_moves_left()))
@@ -476,6 +488,9 @@ class PuzzleGUI:
     
         # Restore All Tiles To Their Original Position
         self.gameplay.solve_puzzle(self.puzzle)
+        # To Keep the game from showing "Time's Up" after pressing Solve.
+        # Also protects Medium
+        self.gameplay.game_finished = True
 
         self.gameplay.moves = 0
         self.moves_var.set("0")
@@ -836,6 +851,7 @@ class PuzzleGUI:
         def reset_mode_stats(*args):
             self.time_left_var.set("--:--")
             self.moves_left_var.set("--")
+            self.set_tiles_left(0)
 
         # Registered in this order: reset first, then rebuild the puzzle
         self.difficulty.trace_add("write", reset_mode_stats)
@@ -1040,7 +1056,11 @@ class PuzzleGUI:
         self.moves_var.set(str(value))
 
     def set_tiles_left(self, value):
-        self.tiles_left_var.set(str(value))
+        # Hard mode hides this number
+        if self.difficulty.get() == "Hard":
+            self.tiles_left_var.set("--")
+        else:
+            self.tiles_left_var.set(str(value))
 
     def set_hints(self, value):
         self.hints_var.set(str(value))
@@ -1069,6 +1089,30 @@ class PuzzleGUI:
 
         if seconds > 0:
             self.root.after(1000, lambda: self.update_timer(game))
+        else:
+            game.game_finished = True
+            self.hint_button.configure(state="disabled")
+            self.solve_button.configure(state="disabled")
+            messagebox.showinfo("Time's Up", "You ran out of time!")
+
+    # Hard mode count-down. The GUI keeps its own clock, so gameplay.py is untouched
+    def start_hard_timer(self):
+        limit = HARD_TIME_LIMITS.get(int(self.grid_size.get()[0]), 120)
+        self.hard_deadline = time.time() + limit
+        self.update_hard_timer(self.gameplay)
+
+    def update_hard_timer(self, game):
+        if game is None or game is not self.gameplay:
+            return
+        if game.difficulty != "Hard" or game.game_finished:
+            return
+
+        seconds = max(0, int(self.hard_deadline - time.time()))
+        minutes, secs = divmod(seconds, 60)
+        self.set_time_left(f"{minutes:02d}:{secs:02d}")
+
+        if seconds > 0:
+            self.root.after(1000, lambda: self.update_hard_timer(game))
         else:
             game.game_finished = True
             self.hint_button.configure(state="disabled")
