@@ -329,178 +329,39 @@ class PuzzleGUI:
     def on_tile_flip(self, event):
         if self.puzzle is None or self.gameplay is None:
             return
-
-        if not (0 <= event.x < self.canvas_size and 0 <= event.y < self.canvas_size):
+        tile_index = self._tile_from_event(event)
+        if tile_index is None:
             return
-
-        size = int(self.grid_size.get()[0])
-        col = int(event.x * size / self.canvas_size)
-        row = int(event.y * size / self.canvas_size)
-        tile_index = row * size + col
-
         if self.gameplay.handle_flip(self.puzzle, tile_index):
-            self.current_tiles = self.puzzle.tiles
-            self.display_tiles(self.current_tiles)
-            self.clear_hints()
-
-            self.set_moves(self.gameplay.get_moves())
-            self.set_tiles_left(self.gameplay.get_tiles_left(self.puzzle))
-
-            if self.difficulty.get() == "Hard":
-                self.set_moves_left(
-                    str(self.gameplay.get_moves_left())
-                )
-
-                        # Check if the puzzle was solved
-            if self.puzzle.is_solved():
-                self.gameplay.game_finished = True
-                self.save_game_result()
-                self.hint_button.configure(state="disabled")
-                self.solve_button.configure(state="disabled")
-
-                self.root.after(
-                    100,
-                    lambda: messagebox.showinfo(
-                        "Puzzle Completed",
-                        "Congratulations! You solved the puzzle!"
-                    )
-                )
-                return
-
-            # Hard mode ends when no moves remain
-            if self.check_hard_game_over():
-                return
+            self._after_move()
 
     # Rotates A Puzzle Tile
     def on_tile_rotate(self, event):
         if self.puzzle is None or self.gameplay is None:
             return
-
-        if not (0 <= event.x < self.canvas_size and 0 <= event.y < self.canvas_size):
+        tile_index = self._tile_from_event(event)
+        if tile_index is None:
             return
-
-        size = int(self.grid_size.get()[0])
-        col = int(event.x * size / self.canvas_size)
-        row = int(event.y * size / self.canvas_size)
-        tile_index = row * size + col
-
         if self.gameplay.handle_rotate(self.puzzle, tile_index):
-            self.current_tiles = self.puzzle.tiles
-            self.display_tiles(self.current_tiles)
-            self.clear_hints()
-
-            self.set_moves(self.gameplay.get_moves())
-            self.set_tiles_left(self.gameplay.get_tiles_left(self.puzzle))
-
-            if self.difficulty.get() == "Hard":
-                self.set_moves_left(
-                    str(self.gameplay.get_moves_left())
-                )
-            
-                        # Check if the puzzle was solved
-            if self.puzzle.is_solved():
-                self.gameplay.game_finished = True
-                self.save_game_result()
-                self.hint_button.configure(state="disabled")
-                self.solve_button.configure(state="disabled")
-
-                self.root.after(
-                    100,
-                    lambda: messagebox.showinfo(
-                        "Puzzle Completed",
-                        "Congratulations! You solved the puzzle!"
-                    )
-                )
-                return
-
-            # Hard mode ends when no moves remain
-            if self.check_hard_game_over():
-                return
+            self._after_move()
 
     # Detect Which Puzzle Tile Is Clicked
     def on_tile_click(self, event):
         if self.puzzle is None or self.gameplay is None:
             return
-
         if not self.gameplay.can_make_move():
             return
-
-        size = int(self.grid_size.get()[0])
-
-        if not (0 <= event.x < self.canvas_size and 0 <= event.y < self.canvas_size):
+        tile_index = self._tile_from_event(event)
+        if tile_index is None:
             return
 
-        col = int(event.x * size / self.canvas_size)
-        row = int(event.y * size / self.canvas_size)
-
-        tile_index = row * size + col
-        print("Clicked tile:", tile_index)
-
         selected = self.gameplay.get_selected_tile()
-
-        if selected is None:
-            self.gameplay.select_tile(tile_index)
-        
-        elif selected == tile_index:
-            self.gameplay.select_tile(tile_index)
-
-        else:
-            if self.gameplay.handle_swap(self.puzzle, selected, tile_index):
-                self.current_tiles = self.puzzle.tiles
-                self.display_tiles(self.current_tiles)
-                self.clear_hints()
-
-                self.set_moves(self.gameplay.get_moves())
-                self.set_tiles_left(self.gameplay.get_tiles_left(self.puzzle))
-
-                if self.difficulty.get() == "Hard":
-                    self.set_moves_left(
-                        str(self.gameplay.get_moves_left())
-                    )
-
-
-                # Check if the puzzle was solved
-                if self.puzzle.is_solved():
-                    self.gameplay.game_finished = True
-                    self.save_game_result()
-                    self.hint_button.configure(state="disabled")
-                    self.solve_button.configure(state="disabled")
-
-                    self.root.after(
-                        100,
-                        lambda: messagebox.showinfo(
-                            "Puzzle Completed",
-                            "Congratulations! You solved the puzzle!"
-                        )
-                    )
-                    return
-
-                # Hard mode ends when no moves remain
-                if self.check_hard_game_over():
-                    return
-
-
-        self.puzzle_canvas.delete("selection")
-
-        selected_tile = self.gameplay.get_selected_tile()
-
-        if selected_tile is not None:
-            size = int(self.grid_size.get()[0])
-            tile_size = self.canvas_size / size
-
-            row = selected_tile // size
-            col = selected_tile % size
-
-            x1 = col * tile_size
-            y1 = row * tile_size
-
-            self.puzzle_canvas.create_rectangle(
-                x1, y1,
-                x1 + tile_size, y1 + tile_size,
-                outline = "#DC0FE3",
-                width = 4,
-                tags = "selection"
-            )
+        if selected is None or selected == tile_index:
+            self.gameplay.select_tile(tile_index)   # select, or deselect on second click
+        elif self.gameplay.handle_swap(self.puzzle, selected, tile_index):
+            self._after_move()
+            return
+        self._draw_selection()
 
     # Show Green Ticks On Correct Tiles
     def show_correct_tiles(self):
