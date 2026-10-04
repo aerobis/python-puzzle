@@ -688,28 +688,31 @@ class PuzzleGUI:
         # Difficulty Selection
         self.difficulty = tk.StringVar(value = "Easy")
 
+        difficulty_inner = tk.Frame(self.difficulty_box, bg = "#DCC8F5")
+        difficulty_inner.place(relx = 0.5, rely = 0.5, anchor = "center")
+
         difficulty_label = tk.Label(
-            self.difficulty_box,
+            difficulty_inner,
             text = "Select Difficulty:",
             font = ("Didot", 16, "bold"),
             fg = "#DC0FE3",
             bg = "#DCC8F5"
         )
-        difficulty_label.pack(pady = (12, 5))
+        difficulty_label.pack(pady = (0, 4))
 
         difficulty_menu = tk.OptionMenu(
-            self.difficulty_box,
+            difficulty_inner,
             self.difficulty,
-            "Easy", "Medium","Hard"
+            "Easy", "Medium", "Hard"
         )
 
         difficulty_menu.config(
             font = ("Didot", 14),
             fg = "#10072B",
-            bg ="#DCC8F5",
+            bg = "#DCC8F5",
             width = 6
         )
-        difficulty_menu.pack(pady = 0)
+        difficulty_menu.pack()
 
         difficulty_menu["menu"].config(
             font = ("Didot", 14),
