@@ -650,7 +650,7 @@ class PuzzleGUI:
         self.top_frame = tk.Frame(
             self.main_frame,
             bg = "#10072B")
-        self.top_frame.pack(anchor = "w", padx = 195, pady = 10)
+        self.top_frame.pack(anchor = "w", padx = 20, pady = 10)
 
         # Frame for Difficulty and Grid Size Slectors
         self.selector_frame = tk.Frame(self.top_frame, 
@@ -761,7 +761,7 @@ class PuzzleGUI:
             width = 486,
             height = 85,
         )
-        self.progress_frame.pack(side = "left", padx = (85, 0))
+        self.progress_frame.pack(side = "left", padx = (20, 0))
         self.progress_frame.grid_propagate(False)
 
         # Top Right Row
@@ -851,7 +851,7 @@ class PuzzleGUI:
 
         # Original Image On The Left
         self.left_frame = tk.Frame(self.image_frame)
-        self.left_frame.pack(side = "left", padx = 40, anchor = "n" )
+        self.left_frame.pack(side = "left", padx = 15, anchor = "n" )
         self.left_frame.config(
             bg = "#10072B"
         )
@@ -908,7 +908,7 @@ class PuzzleGUI:
         # Puzzle Image Frame On The Right
         self.right_frame = tk.Frame(self.image_frame)
         self.right_frame.pack(side = "right", 
-                        padx = 35, 
+                        padx = 15, 
                         anchor = "n")
         self.right_frame.config(
             bg = "#10072B"
