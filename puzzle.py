@@ -193,3 +193,9 @@ class Puzzle:
             t.undo(self)
         self._player_moves.clear()
         self._scramble.clear()
+        
+    def restart(self):
+        # Undo the player's moves, and return to the original scramble
+        for t in reversed(self._player_moves):
+            t.undo(self)
+        self._player_moves.clear()
