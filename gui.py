@@ -287,7 +287,7 @@ class PuzzleGUI:
     # HELPER FUNCTIONS
     def _tile_from_event(self, event):
         # If the registered click is beyond the scope of the canvas
-        if not(0 <= event.x < self.canvas_size and 0 <= event.y <= self.canvas_size):
+        if not(0 <= event.x < self.canvas_size and 0 <= event.y < self.canvas_size):
             return None
         size = int(self.grid_size.get()[0])
         col = int(event.x * size / self.canvas_size)
