@@ -191,6 +191,7 @@ class PuzzleGUI:
 
             self.gameplay = GameplayManager(self.difficulty.get(), size)
             self.gameplay.configure_puzzle(self.puzzle)
+            self.score_saved = False
 
             if self.difficulty.get() == "Medium":
                 self.update_timer()
@@ -277,182 +278,90 @@ class PuzzleGUI:
         if self.hints_used >= 3:
             self.hint_button.configure(state = "disabled")
 
+
+    # HELPER FUNCTIONS
+    def _tile_from_event(self, event):
+        # If the registered click is beyond the scope of the canvas
+        if not(0 <= event.x < self.canvas_size and 0 <= event.y <= self.canvas_size):
+            return None
+        size = int(self.grid_size.get()[0])
+        col = int(event.x * size / self.canvas_size)
+        row = int (event.y * size / self.canvas_size)
+        return row * size + col
+    
+    def _after_move(self):
+        self.gameplay.selected_tile = None
+        self.puzzle_canvas.delete("selection")
+        self.current_tiles = self.puzzle.tiles
+        self.display_tiles(self.current_tiles)
+        self.clear_hints()
+        self.set_moves(self.gameplay.get_moves())
+        self.set_tiles_left(self.gameplay.get_tiles_left(self.puzzle))
+        if self.difficulty.get() == "Hard":
+            self.set_moves_left(str(self.gameplay.get_moves_left()))
+        if self.puzzle.is_solved():
+            self.gameplay.game_finished = True
+            self.save_game_result()
+            self.hint_button.configure(state="disabled")
+            self.solve_button.configure(state="disabled")
+            self.root.after(100, lambda: messagebox.showinfo(
+                "Puzzle Completed!",
+                "Congratulations! You solved the puzzle!"))
+            return
+        self.check_hard_game_over()
+    
+    def _draw_selection(self):
+        self.puzzle_canvas.delete("selection")
+        selected = self.gameplay.get_selected_tile()
+        if selected is None:
+            return
+        size = int(self.grid_size.get()[0])
+        tile_size = self.canvas_size / size
+        row, col = divmod(selected, size)
+        x1 = col * tile_size
+        y1 = row * tile_size
+        self.puzzle_canvas.create_rectangle(
+            x1, y1, x1 + tile_size, y1 + tile_size,
+            outline = "#DC0FE3", width = "4", tags = "selection"
+        )
+
     # Flip A Puzzle Tile
     def on_tile_flip(self, event):
         if self.puzzle is None or self.gameplay is None:
             return
-
-        if not (0 <= event.x < self.canvas_size and 0 <= event.y < self.canvas_size):
+        tile_index = self._tile_from_event(event)
+        if tile_index is None:
             return
-
-        size = int(self.grid_size.get()[0])
-        col = int(event.x * size / self.canvas_size)
-        row = int(event.y * size / self.canvas_size)
-        tile_index = row * size + col
-
         if self.gameplay.handle_flip(self.puzzle, tile_index):
-            self.current_tiles = self.puzzle.tiles
-            self.display_tiles(self.current_tiles)
-            self.clear_hints()
-
-            self.set_moves(self.gameplay.get_moves())
-            self.set_tiles_left(self.gameplay.get_tiles_left(self.puzzle))
-
-            if self.difficulty.get() == "Hard":
-                self.set_moves_left(
-                    str(self.gameplay.get_moves_left())
-                )
-
-                        # Check if the puzzle was solved
-            if self.puzzle.is_solved():
-                self.gameplay.game_finished = True
-                self.save_game_result()
-                self.hint_button.configure(state="disabled")
-                self.solve_button.configure(state="disabled")
-
-                self.root.after(
-                    100,
-                    lambda: messagebox.showinfo(
-                        "Puzzle Completed",
-                        "Congratulations! You solved the puzzle!"
-                    )
-                )
-                return
-
-            # Hard mode ends when no moves remain
-            if self.check_hard_game_over():
-                return
+            self._after_move()
 
     # Rotates A Puzzle Tile
     def on_tile_rotate(self, event):
         if self.puzzle is None or self.gameplay is None:
             return
-
-        if not (0 <= event.x < self.canvas_size and 0 <= event.y < self.canvas_size):
+        tile_index = self._tile_from_event(event)
+        if tile_index is None:
             return
-
-        size = int(self.grid_size.get()[0])
-        col = int(event.x * size / self.canvas_size)
-        row = int(event.y * size / self.canvas_size)
-        tile_index = row * size + col
-
         if self.gameplay.handle_rotate(self.puzzle, tile_index):
-            self.current_tiles = self.puzzle.tiles
-            self.display_tiles(self.current_tiles)
-            self.clear_hints()
-
-            self.set_moves(self.gameplay.get_moves())
-            self.set_tiles_left(self.gameplay.get_tiles_left(self.puzzle))
-
-            if self.difficulty.get() == "Hard":
-                self.set_moves_left(
-                    str(self.gameplay.get_moves_left())
-                )
-            
-                        # Check if the puzzle was solved
-            if self.puzzle.is_solved():
-                self.gameplay.game_finished = True
-                self.save_game_result()
-                self.hint_button.configure(state="disabled")
-                self.solve_button.configure(state="disabled")
-
-                self.root.after(
-                    100,
-                    lambda: messagebox.showinfo(
-                        "Puzzle Completed",
-                        "Congratulations! You solved the puzzle!"
-                    )
-                )
-                return
-
-            # Hard mode ends when no moves remain
-            if self.check_hard_game_over():
-                return
+            self._after_move()
 
     # Detect Which Puzzle Tile Is Clicked
     def on_tile_click(self, event):
         if self.puzzle is None or self.gameplay is None:
             return
-
         if not self.gameplay.can_make_move():
             return
-
-        size = int(self.grid_size.get()[0])
-
-        if not (0 <= event.x < self.canvas_size and 0 <= event.y < self.canvas_size):
+        tile_index = self._tile_from_event(event)
+        if tile_index is None:
             return
 
-        col = int(event.x * size / self.canvas_size)
-        row = int(event.y * size / self.canvas_size)
-
-        tile_index = row * size + col
-        print("Clicked tile:", tile_index)
-
         selected = self.gameplay.get_selected_tile()
-
-        if selected is None:
-            self.gameplay.select_tile(tile_index)
-        
-        elif selected == tile_index:
-            self.gameplay.select_tile(tile_index)
-
-        else:
-            if self.gameplay.handle_swap(self.puzzle, selected, tile_index):
-                self.current_tiles = self.puzzle.tiles
-                self.display_tiles(self.current_tiles)
-                self.clear_hints()
-
-                self.set_moves(self.gameplay.get_moves())
-                self.set_tiles_left(self.gameplay.get_tiles_left(self.puzzle))
-
-                if self.difficulty.get() == "Hard":
-                    self.set_moves_left(
-                        str(self.gameplay.get_moves_left())
-                    )
-
-
-                # Check if the puzzle was solved
-                if self.puzzle.is_solved():
-                    self.gameplay.game_finished = True
-                    self.save_game_result()
-                    self.hint_button.configure(state="disabled")
-                    self.solve_button.configure(state="disabled")
-
-                    self.root.after(
-                        100,
-                        lambda: messagebox.showinfo(
-                            "Puzzle Completed",
-                            "Congratulations! You solved the puzzle!"
-                        )
-                    )
-                    return
-
-                # Hard mode ends when no moves remain
-                if self.check_hard_game_over():
-                    return
-
-
-        self.puzzle_canvas.delete("selection")
-
-        selected_tile = self.gameplay.get_selected_tile()
-
-        if selected_tile is not None:
-            size = int(self.grid_size.get()[0])
-            tile_size = self.canvas_size / size
-
-            row = selected_tile // size
-            col = selected_tile % size
-
-            x1 = col * tile_size
-            y1 = row * tile_size
-
-            self.puzzle_canvas.create_rectangle(
-                x1, y1,
-                x1 + tile_size, y1 + tile_size,
-                outline = "#DC0FE3",
-                width = 4,
-                tags = "selection"
-            )
+        if selected is None or selected == tile_index:
+            self.gameplay.select_tile(tile_index)   # select, or deselect on second click
+        elif self.gameplay.handle_swap(self.puzzle, selected, tile_index):
+            self._after_move()
+            return
+        self._draw_selection()
 
     # Show Green Ticks On Correct Tiles
     def show_correct_tiles(self):
@@ -634,25 +543,26 @@ class PuzzleGUI:
             # Easy - lower moves are better
             if difficulty == "Easy":
                 filtered.sort(
-                    key=lambda score:
+                    key=lambda score: (
+                    -score["result"].get("time_left", 0),
                     score["result"].get("moves", 999999)
-                )
+                ))
 
             # Medium - more remaining time is better
             elif difficulty == "Medium":
                 filtered.sort(
-                    key=lambda score:
-                    score["result"].get("time_left", 0),
-                    reverse=True
-                )
+                    key=lambda score: (
+                    -score["result"].get("time_left", 0),
+                    score["result"].get("moves", 999999)
+                ))
 
             # Hard - more remaining moves are better
             elif difficulty == "Hard":
                 filtered.sort(
-                    key=lambda score:
-                    score["result"].get("moves_left", 0),
-                    reverse=True
-                )
+                    key=lambda score: (
+                    -score["result"].get("time_left", 0),
+                    score["result"].get("moves", 999999)
+                ))
 
             heading = tk.Label(
                 score_frame,
@@ -684,26 +594,14 @@ class PuzzleGUI:
                 result = score["result"]
 
                 if difficulty == "Easy":
-                    result_text = (
-                        f'{result.get("moves", 0)} moves'
-                    )
-
+                    result_text = f'{result.get("moves", 0)} moves'
                 elif difficulty == "Medium":
-                    seconds = result.get("time_left", 0)
-                    minutes, seconds = divmod(
-                        int(seconds),
-                        60
-                    )
-
-                    result_text = (
-                        f"{minutes:02d}:{seconds:02d} remaining"
-                    )
-
+                    minutes, secs = divmod(int(result.get("time_left", 0)), 60)
+                    result_text = (f"{minutes:02d}:{secs:02d} left  |  "
+                                   f'{result.get("moves", 0)} moves')
                 else:
-                    result_text = (
-                        f'{result.get("moves_left", 0)} '
-                        f'moves left'
-                    )
+                    result_text = (f'{result.get("moves_left", 0)} moves left  |  '
+                                   f'{result.get("moves_used", 0)} used')
 
                 row_text = (
                     f"{position}.  "
@@ -741,7 +639,7 @@ class PuzzleGUI:
         self.top_frame = tk.Frame(
             self.main_frame,
             bg = "#10072B")
-        self.top_frame.pack(anchor = "w", padx = 195, pady = 10)
+        self.top_frame.pack(pady = 10)
 
         # Frame for Difficulty and Grid Size Slectors
         self.selector_frame = tk.Frame(self.top_frame, 
@@ -779,28 +677,31 @@ class PuzzleGUI:
         # Difficulty Selection
         self.difficulty = tk.StringVar(value = "Easy")
 
+        difficulty_inner = tk.Frame(self.difficulty_box, bg = "#DCC8F5")
+        difficulty_inner.place(relx = 0.5, rely = 0.5, anchor = "center")
+
         difficulty_label = tk.Label(
-            self.difficulty_box,
+            difficulty_inner,
             text = "Select Difficulty:",
             font = ("Didot", 16, "bold"),
             fg = "#DC0FE3",
             bg = "#DCC8F5"
         )
-        difficulty_label.pack(pady = (12, 5))
+        difficulty_label.pack(pady = (0, 4))
 
         difficulty_menu = tk.OptionMenu(
-            self.difficulty_box,
+            difficulty_inner,
             self.difficulty,
-            "Easy", "Medium","Hard"
+            "Easy", "Medium", "Hard"
         )
 
         difficulty_menu.config(
             font = ("Didot", 14),
             fg = "#10072B",
-            bg ="#DCC8F5",
+            bg = "#DCC8F5",
             width = 6
         )
-        difficulty_menu.pack(pady = 0)
+        difficulty_menu.pack()
 
         difficulty_menu["menu"].config(
             font = ("Didot", 14),
@@ -808,26 +709,29 @@ class PuzzleGUI:
         )
 
         # Grid Size Selection
-        self.grid_size = tk.StringVar(value="3x3")
+        self.grid_size = tk.StringVar(value = "3x3")
+
+        grid_inner = tk.Frame(self.grid_box, bg = "#DCC8F5")
+        grid_inner.place(relx = 0.5, rely = 0.5, anchor = "center")
 
         grid_label = tk.Label(
-            self.grid_box,
+            grid_inner,
             text = "Select Grid Size:",
             font = ("Didot", 16, "bold"),
             fg = "#DC0FE3",
             bg = "#DCC8F5"
         )
-        grid_label.pack(pady = (12, 5))
+        grid_label.pack(pady = (0, 4))
 
         grid_menu = tk.OptionMenu(
-            self.grid_box, 
-            self.grid_size, 
+            grid_inner,
+            self.grid_size,
             "3x3", "4x4", "5x5",
             command = lambda _: self.change_grid()
         )
 
         grid_menu.config(
-            font = ("Didot", 14,),
+            font = ("Didot", 14),
             fg = "#10072B",
             bg = "#DCC8F5",
             width = 3,
@@ -839,7 +743,7 @@ class PuzzleGUI:
             font = ("Didot", 14),
             fg = "#10072B",
         )
-        grid_menu.pack(pady = 0)
+        grid_menu.pack()
 
         # Progress Display
         self.progress_frame = ctk.CTkFrame(
@@ -852,8 +756,11 @@ class PuzzleGUI:
             width = 486,
             height = 85,
         )
-        self.progress_frame.pack(side = "left", padx = (85, 0))
+        self.progress_frame.pack(side = "left", padx = (30, 0))
         self.progress_frame.grid_propagate(False)
+        for col in (0, 2, 4, 6):
+            self.progress_frame.grid_columnconfigure(col, weight = 1)
+        self.progress_frame.grid_rowconfigure(0, weight = 1)
 
         # Top Right Row
         # Progress Value
@@ -870,7 +777,7 @@ class PuzzleGUI:
                 fg_color = "#DCC8F5",
             )
 
-            section.grid(row = 0, column = column, padx = 30, pady = 12)
+            section.grid(row = 0, column = column, padx = 10, pady = 8)
 
             ctk.CTkLabel(
                 section,
@@ -899,6 +806,7 @@ class PuzzleGUI:
                 height = 45,
             )
             divider.grid(row = 0, column = column, padx = 0, pady = 15)
+            return divider
 
         self.moves_section = add_progress_label(
             self.progress_frame, "Moves", self.moves_var, 0)
@@ -917,17 +825,23 @@ class PuzzleGUI:
 
         add_divider(self.progress_frame, 1)
         add_divider(self.progress_frame, 3)
-        add_divider(self.progress_frame, 5)
+        self.last_divider = add_divider(self.progress_frame, 5)
 
         # Update Progress Display Based on Difficulty
         def update_progress_display(*args):
             self.time_section.grid_remove()
             self.moves_left_section.grid_remove()
+            self.last_divider.grid_remove()
+            self.progress_frame.grid_columnconfigure(6, weight = 0)
 
-            if self.difficulty.get() == "Medium":
+            mode = self.difficulty.get()
+            if mode == "Medium":
                 self.time_section.grid()
-            elif self.difficulty.get() == "Hard":
+            elif mode == "Hard":
                 self.moves_left_section.grid()
+            if mode in ("Medium", "Hard"):
+                self.last_divider.grid()
+                self.progress_frame.grid_columnconfigure(6, weight = 1)
 
         self.difficulty.trace_add("write", update_progress_display)
         self.difficulty.trace_add("write", lambda *args: self.change_grid())
@@ -942,7 +856,7 @@ class PuzzleGUI:
 
         # Original Image On The Left
         self.left_frame = tk.Frame(self.image_frame)
-        self.left_frame.pack(side = "left", padx = 40, anchor = "n" )
+        self.left_frame.pack(side = "left", padx = 15, anchor = "n" )
         self.left_frame.config(
             bg = "#10072B"
         )
@@ -999,7 +913,7 @@ class PuzzleGUI:
         # Puzzle Image Frame On The Right
         self.right_frame = tk.Frame(self.image_frame)
         self.right_frame.pack(side = "right", 
-                        padx = 35, 
+                        padx = 15, 
                         anchor = "n")
         self.right_frame.config(
             bg = "#10072B"
@@ -1028,6 +942,7 @@ class PuzzleGUI:
 
         self.puzzle_canvas.bind("<Button-1>", self.on_tile_click)
         self.puzzle_canvas.bind("<Button-3>", self.on_tile_rotate)
+        self.puzzle_canvas.bind("<Button-2>", self.on_tile_rotate);
         self.puzzle_canvas.bind("<Control-Button-1>", self.on_tile_rotate)
         self.puzzle_canvas.bind("<Shift-Button-1>", self.on_tile_flip)
 

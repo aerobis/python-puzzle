@@ -308,20 +308,10 @@ class GameplayManager:
         return False
 
     def finish_game(self):
-        """
-        Finish a manually completed puzzle and save its score.
-        """
-
         if self.game_finished:
             return False
-
         self.game_finished = True
         self.selected_tile = None
-
-        # Solve button results must never enter the leaderboard.
-        if not self.auto_solved:
-            self.save_score()
-
         return True
 
     # -----------------------------------------------------
