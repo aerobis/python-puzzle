@@ -437,6 +437,7 @@ class PuzzleGUI:
 
         elif difficulty == "Hard":
             result = {
+                "time_left": max(0, int(self.hard_deadline - time.time())),
                 "moves_left": self.gameplay.get_moves_left(),
                 "moves_used": self.gameplay.get_moves()
             }
@@ -564,29 +565,22 @@ class PuzzleGUI:
                 if score["difficulty"] == difficulty
             ]
 
-            # Easy - lower moves are better
+            # Easy: fewer moves is better
             if difficulty == "Easy":
-                filtered.sort(
-                    key=lambda score: (
-                    -score["result"].get("time_left", 0),
-                    score["result"].get("moves", 999999)
-                ))
+                filtered.sort(key = lambda s: s["result"].get("moves", 999999))
 
-            # Medium - more remaining time is better
+            # Medium: more time left is better, then fewer moves
             elif difficulty == "Medium":
-                filtered.sort(
-                    key=lambda score: (
-                    -score["result"].get("time_left", 0),
-                    score["result"].get("moves", 999999)
-                ))
+                filtered.sort(key = lambda s: (
+                    -s["result"].get("time_left", 0),
+                    s["result"].get("moves", 999999)))
 
-            # Hard - more remaining moves are better
-            elif difficulty == "Hard":
-                filtered.sort(
-                    key=lambda score: (
-                    -score["result"].get("time_left", 0),
-                    score["result"].get("moves", 999999)
-                ))
+            # Hard: more moves left, then more time left, then fewer moves used
+            else:
+                filtered.sort(key = lambda s: (
+                    -s["result"].get("moves_left", 0),
+                    -s["result"].get("time_left", 0),
+                    s["result"].get("moves_used", 999999)))
 
             heading = tk.Label(
                 score_frame,
@@ -610,10 +604,7 @@ class PuzzleGUI:
                 return
 
             # Display up to 10 results
-            for position, score in enumerate(
-                filtered[:10],
-                start=1
-            ):
+            for position, score in enumerate(filtered[:10], start=1):
                 grid = score["grid_size"]
                 result = score["result"]
 
@@ -624,14 +615,16 @@ class PuzzleGUI:
                     result_text = (f"{minutes:02d}:{secs:02d} left  |  "
                                    f'{result.get("moves", 0)} moves')
                 else:
-                    result_text = (f'{result.get("moves_left", 0)} moves left  |  '
+                    if "time_left" in result:
+                        minutes, secs = divmod(int(result["time_left"]), 60)
+                        time_text = f"{minutes:02d}:{secs:02d}"
+                    else:
+                        time_text = "--"
+                    result_text = (f"{time_text} left  |  "
+                                   f'{result.get("moves_left", 0)} moves left  |  '
                                    f'{result.get("moves_used", 0)} used')
 
-                row_text = (
-                    f"{position}.  "
-                    f"{grid}  |  "
-                    f"{result_text}"
-                )
+                row_text = f"{position}.  {grid}  |  {result_text}"
 
                 score_label = tk.Label(
                     score_frame,
