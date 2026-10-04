@@ -191,6 +191,7 @@ class PuzzleGUI:
 
             self.gameplay = GameplayManager(self.difficulty.get(), size)
             self.gameplay.configure_puzzle(self.puzzle)
+            self.score_saved = False
 
             if self.difficulty.get() == "Medium":
                 self.update_timer()
@@ -276,6 +277,53 @@ class PuzzleGUI:
 
         if self.hints_used >= 3:
             self.hint_button.configure(state = "disabled")
+
+
+    # HELPER FUNCTIONS
+    def _tile_from_event(self, event):
+        # If the registered click is beyond the scope of the canvas
+        if not(0 <= event.x < self.canvas_size and 0 <= event.y <= self.canvas_size):
+            return None
+        size = int(self.grid_size_get()[0])
+        col = int(event.x * size / self.canvas_size)
+        row = int (event.y * size / self.canvas_size)
+        return row * size + col
+    
+    def _after_move(self):
+        self.gameplay.selected_tile = None
+        self.puzzle_canvas.delete("selection")
+        self.current_tiles = self.puzzle.tiles
+        self.display_tiles(self.current_tiles)
+        self.clear_hints()
+        self.set_moves(self.gameplay.get_moves())
+        self.set_tiles_left(self.gameplay.get_tiles_left(self.puzzle))
+        if self.difficulty.get() == "Hard":
+            self.set_moves_left(str(self.gameplay.get_moves_left()))
+        if self.puzzle.is_solved():
+            self.gameplay.game_finished = True
+            self.save_game_result()
+            self.hint_button.configure(state="disabled")
+            self.solve_button.configure(state="disabled")
+            self.root.after(100, lambda: messagebox.showinfo(
+                "Puzzle Completed!",
+                "Congratulations! You solved the puzzle!"))
+            return
+        self.check_hard_game_over()
+    
+    def _draw_selection(self):
+        self.puzzle_canvas.delete("selection")
+        selected = self.gameplay.get_selected_tile()
+        if selected is None:
+            return
+        size = int(self.grid_size.get()[0])
+        tile_size = self.canvas_size / size
+        row, col = divmod(selected, size)
+        x1 = col * tile_size
+        y1 = row * tile_size
+        self.puzzle_canvas.create_rectangle(
+            x1, y1, x1 + tile_size, y1 + tile_size,
+            outline = "#DC0FE3", width = "4", tags = "selection"
+        )
 
     # Flip A Puzzle Tile
     def on_tile_flip(self, event):
@@ -1028,6 +1076,7 @@ class PuzzleGUI:
 
         self.puzzle_canvas.bind("<Button-1>", self.on_tile_click)
         self.puzzle_canvas.bind("<Button-3>", self.on_tile_rotate)
+        self.puzzle_canvas.bind("<Button-2>", self.on_tile_rotate);
         self.puzzle_canvas.bind("<Control-Button-1>", self.on_tile_rotate)
         self.puzzle_canvas.bind("<Shift-Button-1>", self.on_tile_flip)
 
