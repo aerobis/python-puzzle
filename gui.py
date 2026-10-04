@@ -284,7 +284,7 @@ class PuzzleGUI:
         # If the registered click is beyond the scope of the canvas
         if not(0 <= event.x < self.canvas_size and 0 <= event.y <= self.canvas_size):
             return None
-        size = int(self.grid_size_get()[0])
+        size = int(self.grid_size.get()[0])
         col = int(event.x * size / self.canvas_size)
         row = int (event.y * size / self.canvas_size)
         return row * size + col
