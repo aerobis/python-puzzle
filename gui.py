@@ -811,6 +811,7 @@ class PuzzleGUI:
                 height = 45,
             )
             divider.grid(row = 0, column = column, padx = 0, pady = 15)
+            return divider
 
         self.moves_section = add_progress_label(
             self.progress_frame, "Moves", self.moves_var, 0)
@@ -829,7 +830,7 @@ class PuzzleGUI:
 
         add_divider(self.progress_frame, 1)
         add_divider(self.progress_frame, 3)
-        add_divider(self.progress_frame, 5)
+        self.last_divider = add_divider(self.progress_frame, 5)
 
         # Update Progress Display Based on Difficulty
         def update_progress_display(*args):
