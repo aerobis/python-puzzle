@@ -767,31 +767,29 @@ class PuzzleGUI:
         )
         self.progress_frame.pack(side = "left", padx = (30, 0))
         self.progress_frame.grid_propagate(False)
+                # Four equal-width cells, always visible in every mode
         for col in (0, 2, 4, 6):
-            self.progress_frame.grid_columnconfigure(col, weight = 1)
+            self.progress_frame.grid_columnconfigure(col, weight = 1, uniform = "stat")
         self.progress_frame.grid_rowconfigure(0, weight = 1)
 
-        # Top Right Row
-        # Progress Value
+        # Progress values
         self.moves_var = tk.StringVar(value = "0")
         self.tiles_left_var = tk.StringVar(value = "0")
-        self.hints_var = tk.StringVar(value = "3")
         self.time_left_var = tk.StringVar(value = "--:--")
         self.moves_left_var = tk.StringVar(value = "--")
+        # Not shown any more (the Hint button counts hints), but kept so
+        # the existing hints_var.set(...) calls still work
+        self.hints_var = tk.StringVar(value = "3")
 
-        # Function to Create Progress Labels 
+        # Function to Create Progress Labels
         def add_progress_label(parent, title, variable, column):
-            section = ctk.CTkFrame(
-                parent, 
-                fg_color = "#DCC8F5",
-            )
-
-            section.grid(row = 0, column = column, padx = 10, pady = 8)
+            section = ctk.CTkFrame(parent, fg_color = "#DCC8F5")
+            section.grid(row = 0, column = column, padx = 6, pady = 8)
 
             ctk.CTkLabel(
                 section,
                 text = title,
-                font = ("Didot", 16, "bold"),
+                font = ("Didot", 15, "bold"),
                 text_color = "#DC0FE3",
                 bg_color = "#DCC8F5"
             ).pack()
@@ -823,39 +821,25 @@ class PuzzleGUI:
         self.tiles_section = add_progress_label(
             self.progress_frame, "Tiles Left", self.tiles_left_var, 2)
 
-        self.hints_section = add_progress_label(
-            self.progress_frame, "Hints", self.hints_var, 4)
-
         self.time_section = add_progress_label(
-            self.progress_frame, "Time Left", self.time_left_var, 6)
+            self.progress_frame, "Time Left", self.time_left_var, 4)
 
         self.moves_left_section = add_progress_label(
             self.progress_frame, "Moves Left", self.moves_left_var, 6)
 
         add_divider(self.progress_frame, 1)
         add_divider(self.progress_frame, 3)
-        self.last_divider = add_divider(self.progress_frame, 5)
+        add_divider(self.progress_frame, 5)
 
-        # Update Progress Display Based on Difficulty
-        def update_progress_display(*args):
-            self.time_section.grid_remove()
-            self.moves_left_section.grid_remove()
-            self.last_divider.grid_remove()
-            self.progress_frame.grid_columnconfigure(6, weight = 0)
+        # Clear the mode-specific cells whenever the difficulty changes,
+        # so Easy never shows a stale time or move count from an earlier game
+        def reset_mode_stats(*args):
+            self.time_left_var.set("--:--")
+            self.moves_left_var.set("--")
 
-            mode = self.difficulty.get()
-            if mode == "Medium":
-                self.time_section.grid()
-            elif mode == "Hard":
-                self.moves_left_section.grid()
-            if mode in ("Medium", "Hard"):
-                self.last_divider.grid()
-                self.progress_frame.grid_columnconfigure(6, weight = 1)
-
-        self.difficulty.trace_add("write", update_progress_display)
+        # Registered in this order: reset first, then rebuild the puzzle
+        self.difficulty.trace_add("write", reset_mode_stats)
         self.difficulty.trace_add("write", lambda *args: self.change_grid())
-        update_progress_display()
-
         # Frame To Hold Both Images
         self.image_frame = tk.Frame(self.main_frame)
         self.image_frame.pack(pady = 0)
