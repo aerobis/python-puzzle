@@ -543,25 +543,26 @@ class PuzzleGUI:
             # Easy - lower moves are better
             if difficulty == "Easy":
                 filtered.sort(
-                    key=lambda score:
+                    key=lambda score: (
+                    -score["result"].get("time_left", 0),
                     score["result"].get("moves", 999999)
-                )
+                ))
 
             # Medium - more remaining time is better
             elif difficulty == "Medium":
                 filtered.sort(
-                    key=lambda score:
-                    score["result"].get("time_left", 0),
-                    reverse=True
-                )
+                    key=lambda score: (
+                    -score["result"].get("time_left", 0),
+                    score["result"].get("moves", 999999)
+                ))
 
             # Hard - more remaining moves are better
             elif difficulty == "Hard":
                 filtered.sort(
-                    key=lambda score:
-                    score["result"].get("moves_left", 0),
-                    reverse=True
-                )
+                    key=lambda score: (
+                    -score["result"].get("time_left", 0),
+                    score["result"].get("moves", 999999)
+                ))
 
             heading = tk.Label(
                 score_frame,
@@ -593,26 +594,14 @@ class PuzzleGUI:
                 result = score["result"]
 
                 if difficulty == "Easy":
-                    result_text = (
-                        f'{result.get("moves", 0)} moves'
-                    )
-
+                    result_text = f'{result.get("moves", 0)} moves'
                 elif difficulty == "Medium":
-                    seconds = result.get("time_left", 0)
-                    minutes, seconds = divmod(
-                        int(seconds),
-                        60
-                    )
-
-                    result_text = (
-                        f"{minutes:02d}:{seconds:02d} remaining"
-                    )
-
+                    minutes, secs = divmod(int(result.get("time_left", 0)), 60)
+                    result_text = (f"{minutes:02d}:{secs:02d} left  |  "
+                                   f'{result.get("moves", 0)} moves')
                 else:
-                    result_text = (
-                        f'{result.get("moves_left", 0)} '
-                        f'moves left'
-                    )
+                    result_text = (f'{result.get("moves_left", 0)} moves left  |  '
+                                   f'{result.get("moves_used", 0)} used')
 
                 row_text = (
                     f"{position}.  "
