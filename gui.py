@@ -720,26 +720,29 @@ class PuzzleGUI:
         )
 
         # Grid Size Selection
-        self.grid_size = tk.StringVar(value="3x3")
+        self.grid_size = tk.StringVar(value = "3x3")
+
+        grid_inner = tk.Frame(self.grid_box, bg = "#DCC8F5")
+        grid_inner.place(relx = 0.5, rely = 0.5, anchor = "center")
 
         grid_label = tk.Label(
-            self.grid_box,
+            grid_inner,
             text = "Select Grid Size:",
             font = ("Didot", 16, "bold"),
             fg = "#DC0FE3",
             bg = "#DCC8F5"
         )
-        grid_label.pack(pady = (12, 5))
+        grid_label.pack(pady = (0, 4))
 
         grid_menu = tk.OptionMenu(
-            self.grid_box, 
-            self.grid_size, 
+            grid_inner,
+            self.grid_size,
             "3x3", "4x4", "5x5",
             command = lambda _: self.change_grid()
         )
 
         grid_menu.config(
-            font = ("Didot", 14,),
+            font = ("Didot", 14),
             fg = "#10072B",
             bg = "#DCC8F5",
             width = 3,
@@ -751,7 +754,7 @@ class PuzzleGUI:
             font = ("Didot", 14),
             fg = "#10072B",
         )
-        grid_menu.pack(pady = 0)
+        grid_menu.pack()
 
         # Progress Display
         self.progress_frame = ctk.CTkFrame(
