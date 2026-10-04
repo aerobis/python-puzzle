@@ -1,13 +1,17 @@
 import cv2
+import time
 import tkinter as tk
 import customtkinter as ctk
-
 from tkinter import filedialog
 from tkinter import messagebox
 from image_processor import ImageProcessor
 from puzzle import Puzzle
 from gameplay import GameplayManager
 from scoreboard import Scoreboard
+
+# Hard mode count-down in seconds. Copy the medium numbers from
+# time_limits in gameplay.py's setup_difficulty so the two match up
+HARD_TIME_LIMITS = {3: 120, 4: 240, 5: 420}
 
 class PuzzleGUI:
     def __init__(self):
@@ -33,6 +37,7 @@ class PuzzleGUI:
 
         self.scoreboard = Scoreboard()
         self.score_saved = False
+        self.original_hidden = False
 
         # Background Colour
         self.root.config(bg = "#10072B")
@@ -110,8 +115,12 @@ class PuzzleGUI:
 
             if self.difficulty.get() == "Hard":
                 self.set_moves_left(str(self.gameplay.get_moves_left()))
+                self.start_hard_timer()
 
-            self.tiles_left_var.set(str(self.puzzle.incorrect_count()))
+            if self.difficulty.get() == "Hard":
+                self.set_moves_left(str(self.gameplay.get_moves_left()))
+
+            self.set_tiles_left(self.puzzle.incorrect_count())
             self.moves_var.set("0")
 
             self.hints_used = 0
@@ -134,6 +143,10 @@ class PuzzleGUI:
                 image = photo
             )
             self.original_hint_canvas.image = photo
+            
+            # For Hidden/Non-hidden states
+            self.set_original_hidden(False)
+            self.hide_button.configure(state="normal")
 
             # Enable The Hint Button
             self.hint_button.configure(state = "normal", text = "Hint (0/3)")
@@ -198,8 +211,12 @@ class PuzzleGUI:
 
             if self.difficulty.get() == "Hard":
                 self.set_moves_left(str(self.gameplay.get_moves_left()))
+                self.start_hard_timer()
 
-            self.tiles_left_var.set(str(self.puzzle.incorrect_count()))
+            if self.difficulty.get() == "Hard":
+                self.set_moves_left(str(self.gameplay.get_moves_left()))
+
+            self.set_tiles_left(self.puzzle.incorrect_count())
             self.moves_var.set("0")
 
             self.hints_used = 0
@@ -282,7 +299,7 @@ class PuzzleGUI:
     # HELPER FUNCTIONS
     def _tile_from_event(self, event):
         # If the registered click is beyond the scope of the canvas
-        if not(0 <= event.x < self.canvas_size and 0 <= event.y <= self.canvas_size):
+        if not(0 <= event.x < self.canvas_size and 0 <= event.y < self.canvas_size):
             return None
         size = int(self.grid_size.get()[0])
         col = int(event.x * size / self.canvas_size)
@@ -304,6 +321,7 @@ class PuzzleGUI:
             self.save_game_result()
             self.hint_button.configure(state="disabled")
             self.solve_button.configure(state="disabled")
+            self.set_original_hidden(False)
             self.root.after(100, lambda: messagebox.showinfo(
                 "Puzzle Completed!",
                 "Congratulations! You solved the puzzle!"))
@@ -419,6 +437,7 @@ class PuzzleGUI:
 
         elif difficulty == "Hard":
             result = {
+                "time_left": max(0, int(self.hard_deadline - time.time())),
                 "moves_left": self.gameplay.get_moves_left(),
                 "moves_used": self.gameplay.get_moves()
             }
@@ -470,15 +489,21 @@ class PuzzleGUI:
     
         # Restore All Tiles To Their Original Position
         self.gameplay.solve_puzzle(self.puzzle)
+        # To Keep the game from showing "Time's Up" after pressing Solve.
+        # Also protects Medium
+        self.gameplay.game_finished = True
 
         self.gameplay.moves = 0
         self.moves_var.set("0")
 
         self.current_tiles = self.puzzle.tiles
-        self.tiles_left_var.set("0")
+        self.set_tiles_left("0")
 
         # Display the completed puzzle
         self.display_tiles(self.current_tiles)
+        
+        # Set original image's default state to non-hidden
+        self.set_original_hidden(False)
 
         # Remove The Circles
         self.original_hint_canvas.delete("hint")
@@ -540,29 +565,22 @@ class PuzzleGUI:
                 if score["difficulty"] == difficulty
             ]
 
-            # Easy - lower moves are better
+            # Easy: fewer moves is better
             if difficulty == "Easy":
-                filtered.sort(
-                    key=lambda score: (
-                    -score["result"].get("time_left", 0),
-                    score["result"].get("moves", 999999)
-                ))
+                filtered.sort(key = lambda s: s["result"].get("moves", 999999))
 
-            # Medium - more remaining time is better
+            # Medium: more time left is better, then fewer moves
             elif difficulty == "Medium":
-                filtered.sort(
-                    key=lambda score: (
-                    -score["result"].get("time_left", 0),
-                    score["result"].get("moves", 999999)
-                ))
+                filtered.sort(key = lambda s: (
+                    -s["result"].get("time_left", 0),
+                    s["result"].get("moves", 999999)))
 
-            # Hard - more remaining moves are better
-            elif difficulty == "Hard":
-                filtered.sort(
-                    key=lambda score: (
-                    -score["result"].get("time_left", 0),
-                    score["result"].get("moves", 999999)
-                ))
+            # Hard: more moves left, then more time left, then fewer moves used
+            else:
+                filtered.sort(key = lambda s: (
+                    -s["result"].get("moves_left", 0),
+                    -s["result"].get("time_left", 0),
+                    s["result"].get("moves_used", 999999)))
 
             heading = tk.Label(
                 score_frame,
@@ -586,10 +604,7 @@ class PuzzleGUI:
                 return
 
             # Display up to 10 results
-            for position, score in enumerate(
-                filtered[:10],
-                start=1
-            ):
+            for position, score in enumerate(filtered[:10], start=1):
                 grid = score["grid_size"]
                 result = score["result"]
 
@@ -600,14 +615,16 @@ class PuzzleGUI:
                     result_text = (f"{minutes:02d}:{secs:02d} left  |  "
                                    f'{result.get("moves", 0)} moves')
                 else:
-                    result_text = (f'{result.get("moves_left", 0)} moves left  |  '
+                    if "time_left" in result:
+                        minutes, secs = divmod(int(result["time_left"]), 60)
+                        time_text = f"{minutes:02d}:{secs:02d}"
+                    else:
+                        time_text = "--"
+                    result_text = (f"{time_text} left  |  "
+                                   f'{result.get("moves_left", 0)} moves left  |  '
                                    f'{result.get("moves_used", 0)} used')
 
-                row_text = (
-                    f"{position}.  "
-                    f"{grid}  |  "
-                    f"{result_text}"
-                )
+                row_text = f"{position}.  {grid}  |  {result_text}"
 
                 score_label = tk.Label(
                     score_frame,
@@ -656,7 +673,7 @@ class PuzzleGUI:
             corner_radius = 15,
             width = 240,
             height = 85,
-   )
+        )
         self.difficulty_box.pack(side = "left", padx = (5, 0))
         self.difficulty_box.pack_propagate(False)
 
@@ -753,36 +770,34 @@ class PuzzleGUI:
             border_color = "#8A2BE2",
             border_width = 2.5,
             corner_radius = 15,
-            width = 486,
+            width = 490,
             height = 85,
         )
         self.progress_frame.pack(side = "left", padx = (30, 0))
         self.progress_frame.grid_propagate(False)
+                # Four equal-width cells, always visible in every mode
         for col in (0, 2, 4, 6):
-            self.progress_frame.grid_columnconfigure(col, weight = 1)
+            self.progress_frame.grid_columnconfigure(col, weight = 1, uniform = "stat")
         self.progress_frame.grid_rowconfigure(0, weight = 1)
 
-        # Top Right Row
-        # Progress Value
+        # Progress values
         self.moves_var = tk.StringVar(value = "0")
         self.tiles_left_var = tk.StringVar(value = "0")
-        self.hints_var = tk.StringVar(value = "3")
         self.time_left_var = tk.StringVar(value = "--:--")
         self.moves_left_var = tk.StringVar(value = "--")
+        # Not shown any more (the Hint button counts hints), but kept so
+        # the existing hints_var.set(...) calls still work
+        self.hints_var = tk.StringVar(value = "3")
 
-        # Function to Create Progress Labels 
+        # Function to Create Progress Labels
         def add_progress_label(parent, title, variable, column):
-            section = ctk.CTkFrame(
-                parent, 
-                fg_color = "#DCC8F5",
-            )
-
-            section.grid(row = 0, column = column, padx = 10, pady = 8)
+            section = ctk.CTkFrame(parent, fg_color = "#DCC8F5")
+            section.grid(row = 0, column = column, padx = 6, pady = 8)
 
             ctk.CTkLabel(
                 section,
                 text = title,
-                font = ("Didot", 16, "bold"),
+                font = ("Didot", 15, "bold"),
                 text_color = "#DC0FE3",
                 bg_color = "#DCC8F5"
             ).pack()
@@ -814,39 +829,30 @@ class PuzzleGUI:
         self.tiles_section = add_progress_label(
             self.progress_frame, "Tiles Left", self.tiles_left_var, 2)
 
-        self.hints_section = add_progress_label(
-            self.progress_frame, "Hints", self.hints_var, 4)
-
         self.time_section = add_progress_label(
-            self.progress_frame, "Time Left", self.time_left_var, 6)
+            self.progress_frame, "Time Left", self.time_left_var, 4)
 
         self.moves_left_section = add_progress_label(
             self.progress_frame, "Moves Left", self.moves_left_var, 6)
 
         add_divider(self.progress_frame, 1)
         add_divider(self.progress_frame, 3)
-        self.last_divider = add_divider(self.progress_frame, 5)
+        add_divider(self.progress_frame, 5)
 
-        # Update Progress Display Based on Difficulty
-        def update_progress_display(*args):
-            self.time_section.grid_remove()
-            self.moves_left_section.grid_remove()
-            self.last_divider.grid_remove()
-            self.progress_frame.grid_columnconfigure(6, weight = 0)
+        # Clear the mode-specific cells whenever the difficulty changes,
+        # so Easy never shows a stale time or move count from an earlier game
+        def reset_mode_stats(*args):
+            self.time_left_var.set("--:--")
+            self.moves_left_var.set("--")
+            self.set_tiles_left(0)
 
-            mode = self.difficulty.get()
-            if mode == "Medium":
-                self.time_section.grid()
-            elif mode == "Hard":
-                self.moves_left_section.grid()
-            if mode in ("Medium", "Hard"):
-                self.last_divider.grid()
-                self.progress_frame.grid_columnconfigure(6, weight = 1)
+        # One callback, so the order is always: reset first, then rebuild
+        def on_difficulty_change(*args):
+            reset_mode_stats()
+            self.change_grid()
 
-        self.difficulty.trace_add("write", update_progress_display)
-        self.difficulty.trace_add("write", lambda *args: self.change_grid())
-        update_progress_display()
-
+        self.difficulty.trace_add("write", on_difficulty_change)
+        
         # Frame To Hold Both Images
         self.image_frame = tk.Frame(self.main_frame)
         self.image_frame.pack(pady = 0)
@@ -894,10 +900,13 @@ class PuzzleGUI:
         )
         self.original_hint_canvas.pack()
 
-        # Upoad Image button
+        # Upload / Hide buttons under the original image
+        self.left_button_frame = tk.Frame(self.left_frame, bg = "#10072B")
+        self.left_button_frame.pack(pady = (25, 0))
+
         self.load_button = ctk.CTkButton(
-            self.left_frame,
-            text = "Upload Image (JPG, PNG, BMP)",
+            self.left_button_frame,
+            text = "Upload Image",
             command = self.load_image,
             font = ("Arial", 16, "bold"),
             text_color = "#8A2BE2",
@@ -905,15 +914,29 @@ class PuzzleGUI:
             border_width = 2,
             border_color = "#F4E8FF",
             hover_color = "#DC0FE3",
-            width = self.canvas_size,
-            height = 50 
+            width = 215,
+            height = 50
         )
-        self.load_button.pack(pady = (25, 0))
+        self.load_button.pack(side = "left", padx = 15)
+
+        self.hide_button = ctk.CTkButton(
+            self.left_button_frame,
+            text = "Hide Original Image",
+            command = self.toggle_original,
+            state = "disabled",
+            font = ("Arial", 16, "bold"),
+            text_color = "#DCC8F5",
+            fg_color = "#8A2BE2",
+            hover_color = "#DC0FE3",
+            width = 215,
+            height = 50
+        )
+        self.hide_button.pack(side = "left", padx = 15)
 
         # Puzzle Image Frame On The Right
         self.right_frame = tk.Frame(self.image_frame)
         self.right_frame.pack(side = "right", 
-                        padx = (15, 0) 
+                        padx = (15, 0),
                         anchor = "n")
         self.right_frame.config(
             bg = "#10072B"
@@ -966,10 +989,10 @@ class PuzzleGUI:
             border_width = 2,
             border_color = "#F4E8FF",
             hover_color = "#DC0FE3",
-            width = 240,
+            width = 215,
             height = 50
         )
-        self.hint_button.pack(side = "left", padx = 10)
+        self.hint_button.pack(side = "left", padx = 15)
 
         self.solve_button = ctk.CTkButton(
             self.button_frame,
@@ -980,10 +1003,10 @@ class PuzzleGUI:
             text_color = "#DCC8F5",
             fg_color = "#8A2BE2",
             hover_color = "#DC0FE3",
-            width = 240,
+            width = 215,
             height = 50
         )
-        self.solve_button.pack(side = "right", padx = 10)
+        self.solve_button.pack(side = "right", padx = 15)
 
 
         # Scoreboard Button - Himanshu Part
@@ -995,7 +1018,7 @@ class PuzzleGUI:
             text_color = "#DCC8F5",
             fg_color = "#8A2BE2",
             hover_color = "#DC0FE3",
-            width = 233,
+            width = 240,
             height = 50
         )
 
@@ -1030,7 +1053,11 @@ class PuzzleGUI:
         self.moves_var.set(str(value))
 
     def set_tiles_left(self, value):
-        self.tiles_left_var.set(str(value))
+        # Hard mode hides this number
+        if self.difficulty.get() == "Hard":
+            self.tiles_left_var.set("--")
+        else:
+            self.tiles_left_var.set(str(value))
 
     def set_hints(self, value):
         self.hints_var.set(str(value))
@@ -1065,11 +1092,67 @@ class PuzzleGUI:
             self.solve_button.configure(state="disabled")
             messagebox.showinfo("Time's Up", "You ran out of time!")
 
+    # Hard mode count-down. The GUI keeps its own clock, so gameplay.py is untouched
+    def start_hard_timer(self):
+        limit = HARD_TIME_LIMITS.get(int(self.grid_size.get()[0]), 120)
+        self.hard_deadline = time.time() + limit
+        self.update_hard_timer(self.gameplay)
+
+    def update_hard_timer(self, game):
+        if game is None or game is not self.gameplay:
+            return
+        if game.difficulty != "Hard" or game.game_finished:
+            return
+
+        seconds = max(0, int(self.hard_deadline - time.time()))
+        minutes, secs = divmod(seconds, 60)
+        self.set_time_left(f"{minutes:02d}:{secs:02d}")
+
+        if seconds > 0:
+            self.root.after(1000, lambda: self.update_hard_timer(game))
+        else:
+            game.game_finished = True
+            self.hint_button.configure(state="disabled")
+            self.solve_button.configure(state="disabled")
+            messagebox.showinfo("Time's Up", "You ran out of time!")
+
     def set_time_left(self, value):
         self.time_left_var.set(value)
 
     def set_moves_left(self, value):
         self.moves_left_var.set(value)
+
+    # Hide or Show the original image (Extra difficulty)
+    def toggle_original(self):
+        if self.image_processor is None:
+            return
+        else:
+            self.set_original_hidden(not self.original_hidden);
+            
+    def set_original_hidden(self, hidden):
+        self.original_hidden = hidden
+        self.original_hint_canvas.delete("cover")
+
+        if hidden:
+            size = self.canvas_size + 10
+            self.original_hint_canvas.create_rectangle(
+                0, 0, size, size,
+                fill = "#10072B", outline = "", tags = "cover"
+            )
+            
+            self.original_hint_canvas.create_text(
+                size / 2, size / 2,
+                text = "Original Image Hidden",
+                fill = "#DCC8F5",
+                font = ("Didot", 22, "bold"),
+                tags = "cover"
+            )
+            # Keep the hint circles visible on top of the cover
+            self.original_hint_canvas.tag_raise("hint")
+            self.hide_button.configure(text="Show Original Image")
+        else:
+            self.hide_button.configure(text="Hide Original Image")
+        
 
     def run(self):
         self.root.mainloop()
