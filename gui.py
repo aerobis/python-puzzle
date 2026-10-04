@@ -147,6 +147,9 @@ class PuzzleGUI:
             # For Hidden/Non-hidden states
             self.set_original_hidden(False)
             self.hide_button.configure(state="normal")
+            
+            # For restarting the game
+            self.restart_button.configure(state="normal")
 
             # Enable The Hint Button
             self.hint_button.configure(state = "normal", text = "Hint (0/3)")
@@ -1008,21 +1011,38 @@ class PuzzleGUI:
         )
         self.solve_button.pack(side = "right", padx = 15)
 
+        # Restart / Scoreboard buttons - Himanshu & Shreyash
+        self.bottom_button_frame = tk.Frame(self.right_frame, bg = "#10072B")
+        self.bottom_button_frame.pack(pady = (15, 0))
 
-        # Scoreboard Button - Himanshu Part
+        self.restart_button = ctk.CTkButton(
+            self.bottom_button_frame,
+            text = "Restart",
+            command = self.restart_puzzle,
+            state = "disabled",
+            font = ("Arial", 16, "bold"),
+            text_color = "#8A2BE2",
+            fg_color = "#F4E8FF",
+            border_width = 2,
+            border_color = "#F4E8FF",
+            hover_color = "#DC0FE3",
+            width = 215,
+            height = 50
+        )
+        self.restart_button.pack(side = "left", padx = 15)
+
         self.scoreboard_button = ctk.CTkButton(
-            self.right_frame,
+            self.bottom_button_frame,
             text = "Scoreboard",
             command = self.show_scoreboard,
             font = ("Arial", 16, "bold"),
             text_color = "#DCC8F5",
             fg_color = "#8A2BE2",
             hover_color = "#DC0FE3",
-            width = 240,
+            width = 215,
             height = 50
         )
-
-        self.scoreboard_button.pack(pady = (15, 0))
+        self.scoreboard_button.pack(side = "left", padx = 15)
 
         # How to Play Instructions
         self.instructions_label = tk.Label(
@@ -1121,6 +1141,50 @@ class PuzzleGUI:
 
     def set_moves_left(self, value):
         self.moves_left_var.set(value)
+
+    # Restart the same puzzle with new moves, hints and timer
+    def restart_puzzle(self):
+        if self.puzzle is None or self.gameplay is None:
+            return
+
+        # Check first if a game is in progress, in case of a stray click
+        if self.gameplay.get_moves() > 0 and not self.gameplay.game_finished:
+            if not messagebox.askyesno(
+                "Restart", "Restart this puzzle? Your moves will be lost."
+            ):
+                return
+
+        self.puzzle.restart()
+
+        # After Solve, the original puzzle is gone, so shuffle a new one
+        if self.puzzle.is_solved():
+            self.change_grid()
+            return
+
+        size = int(self.grid_size.get()[0])
+        self.gameplay = GameplayManager(self.difficulty.get(), size)
+        self.gameplay.configure_puzzle(self.puzzle)
+        self.score_saved = False
+
+        if self.difficulty.get() == "Medium":
+            self.update_timer()
+        elif self.difficulty.get() == "Hard":
+            self.set_moves_left(str(self.gameplay.get_moves_left()))
+            self.start_hard_timer()
+
+        self.set_moves(0)
+        self.set_tiles_left(self.puzzle.incorrect_count())
+        self.hints_used = 0
+        self.hinted_tiles.clear()
+        self.hints_var.set("3")
+
+        self.puzzle_canvas.delete("selection")
+        self.clear_hints()
+        self.current_tiles = self.puzzle.tiles
+        self.display_tiles(self.current_tiles)
+
+        self.hint_button.configure(state = "normal", text = "Hint (0/3)")
+        self.solve_button.configure(state = "normal")
 
     # Hide or Show the original image (Extra difficulty)
     def toggle_original(self):
