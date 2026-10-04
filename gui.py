@@ -654,10 +654,10 @@ class PuzzleGUI:
             border_color = "#8A2BE2",
             border_width = 2.5,
             corner_radius = 15,
-            width = 233,
+            width = 240,
             height = 85,
    )
-        self.difficulty_box.pack(side = "left", padx = (10, 10))
+        self.difficulty_box.pack(side = "left", padx = (5, 0))
         self.difficulty_box.pack_propagate(False)
 
         # Grid Size Box
@@ -668,7 +668,7 @@ class PuzzleGUI:
             border_color = "#8A2BE2",
             border_width = 2.5,
             corner_radius = 15,
-            width = 233,
+            width = 240,
             height = 85,
         )
         self.grid_box.pack(side = "left", padx = (10, 0))
@@ -913,7 +913,7 @@ class PuzzleGUI:
         # Puzzle Image Frame On The Right
         self.right_frame = tk.Frame(self.image_frame)
         self.right_frame.pack(side = "right", 
-                        padx = 15, 
+                        padx = (15, 0) 
                         anchor = "n")
         self.right_frame.config(
             bg = "#10072B"
@@ -966,7 +966,7 @@ class PuzzleGUI:
             border_width = 2,
             border_color = "#F4E8FF",
             hover_color = "#DC0FE3",
-            width = 233,
+            width = 240,
             height = 50
         )
         self.hint_button.pack(side = "left", padx = 10)
@@ -980,7 +980,7 @@ class PuzzleGUI:
             text_color = "#DCC8F5",
             fg_color = "#8A2BE2",
             hover_color = "#DC0FE3",
-            width = 233,
+            width = 240,
             height = 50
         )
         self.solve_button.pack(side = "right", padx = 10)
