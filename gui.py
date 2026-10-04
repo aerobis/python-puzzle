@@ -762,7 +762,7 @@ class PuzzleGUI:
             border_color = "#8A2BE2",
             border_width = 2.5,
             corner_radius = 15,
-            width = 486,
+            width = 490,
             height = 85,
         )
         self.progress_frame.pack(side = "left", padx = (30, 0))
