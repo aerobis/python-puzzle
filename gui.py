@@ -833,14 +833,20 @@ class PuzzleGUI:
         self.last_divider = add_divider(self.progress_frame, 5)
 
         # Update Progress Display Based on Difficulty
-        def update_progress_display(*args):
+         def update_progress_display(*args):
             self.time_section.grid_remove()
             self.moves_left_section.grid_remove()
+            self.last_divider.grid_remove()
+            self.progress_frame.grid_columnconfigure(6, weight = 0)
 
-            if self.difficulty.get() == "Medium":
+            mode = self.difficulty.get()
+            if mode == "Medium":
                 self.time_section.grid()
-            elif self.difficulty.get() == "Hard":
+            elif mode == "Hard":
                 self.moves_left_section.grid()
+            if mode in ("Medium", "Hard"):
+                self.last_divider.grid()
+                self.progress_frame.grid_columnconfigure(6, weight = 1)
 
         self.difficulty.trace_add("write", update_progress_display)
         self.difficulty.trace_add("write", lambda *args: self.change_grid())
