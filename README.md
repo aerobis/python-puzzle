@@ -21,11 +21,16 @@ Python 3.10+ is required (Tested on Python 3.14). Tkinter ships with Python. How
 - Solve restores the original image.
 - Green tick marks indicate that the tile is in the right place with the right orientation.
 
-## Difficulty
+# Difficulty
+- Easy: no limits, scored by moves
+- Medium: countdown timer (2 / 4 / 7 minutes for 3x3 / 4x4 / 5x5), scored by time then moves
+- Hard: limited moves (minimum solve cost plus an allowance) and a countdown timer. Tiles Left is hidden
 
-- Easy: scored by moves used.
-- Medium: Countdown timer, scored by time left (then moves)
-- Hard: Countdown timer, scored by time left (then moves)
+# Controls
+- Left click: select a tile, then click another to swap. Click the same tile to deselect
+- Right click: rotate 90 degrees clockwise
+- Shift + left click: flip horizontally
+- Hint (max 3 per image), Solve, Restart, Hide/Show Original
 
 ## Files
 
@@ -51,4 +56,3 @@ Python 3.10+ is required (Tested on Python 3.14). Tkinter ships with Python. How
 ### Sobit Paudel            :       S403784
 ### Shreyash Upreti         :       S406921
 
-EOF 

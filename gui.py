@@ -166,30 +166,10 @@ class PuzzleGUI:
 
         index = 0
 
-        for row in range(size):
-            for col in range(size):
-
-                # Calculate Each Tile's Position
-                x = round(col * self.canvas_size / size)
-                y = round(row * self.canvas_size / size)
-
-                # Convert The Tile For Tkinter
-                tile = tiles[index]
-                tile_photo = tk.PhotoImage(
-                    data = self.image_processor.to_png_bytes(tile.image)
-                )
-
-                # Keep The Image In Memory
-                self.puzzle_canvas.tiles.append(tile_photo)
-
-                # Display The Tile
-                self.puzzle_canvas.create_image(
-                    x, y,
-                    anchor = "nw",
-                    image = tile_photo,
-                )
-
-                index +=1
+        board = self.image_processor.assemble([t.image for t in tiles], size)
+        photo = tk.PhotoImage(data = self.image_processor.to_png_bytes(board))
+        self.puzzle_canvas.tiles = [photo]
+        self.puzzle_canvas.create_image(0, 0, anchor = "nw", image = photo)
 
         self.draw_grid()
         self.show_correct_tiles()
