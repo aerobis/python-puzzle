@@ -67,5 +67,15 @@ for n in (3, 4, 5):
                     p.rotate(x.index)
         assert p.is_solved()
         assert p.moves == par, (p.moves, par)
+        
+    # ---- restart returns to the starting scramble ----
+    p = Puzzle(fake_tiles(3), 3)
+    before = [t.image.copy() for t in p.tiles]
+    p.swap(0, 1)
+    p.rotate(2)
+    p.flip(3)
+    p.restart()
+    assert p.moves == 0
+    assert all(np.array_equal(a, t.image) for a, t in zip(before, p.tiles))
 
 print("All tests OK")

@@ -1,0 +1,105 @@
+[
+    {
+        "difficulty": "Hard",
+        "grid_size": "3x3",
+        "result": {
+            "time_left": 98,
+            "moves_left": 4,
+            "moves_used": 17
+        },
+        "date": "04/10/2026 20:23"
+    },
+    {
+        "difficulty": "Hard",
+        "grid_size": "3x3",
+        "result": {
+            "time_left": 101,
+            "moves_left": 6,
+            "moves_used": 12
+        },
+        "date": "04/10/2026 20:26"
+    },
+    {
+        "difficulty": "Hard",
+        "grid_size": "3x3",
+        "result": {
+            "time_left": 108,
+            "moves_left": 8,
+            "moves_used": 9
+        },
+        "date": "04/10/2026 20:26"
+    },
+    {
+        "difficulty": "Easy",
+        "grid_size": "3x3",
+        "result": {
+            "moves": 11
+        },
+        "date": "04/10/2026 21:47"
+    },
+    {
+        "difficulty": "Medium",
+        "grid_size": "3x3",
+        "result": {
+            "time_left": 105,
+            "moves": 8
+        },
+        "date": "04/10/2026 21:48"
+    },
+    {
+        "difficulty": "Hard",
+        "grid_size": "3x3",
+        "result": {
+            "time_left": 103,
+            "moves_left": 8,
+            "moves_used": 14
+        },
+        "date": "04/10/2026 21:48"
+    },
+    {
+        "difficulty": "Hard",
+        "grid_size": "3x3",
+        "result": {
+            "time_left": 103,
+            "moves_left": 4,
+            "moves_used": 12
+        },
+        "date": "04/10/2026 21:52"
+    },
+    {
+        "difficulty": "Hard",
+        "grid_size": "3x3",
+        "result": {
+            "time_left": 108,
+            "moves_left": 8,
+            "moves_used": 8
+        },
+        "date": "04/10/2026 21:53"
+    },
+    {
+        "difficulty": "Hard",
+        "grid_size": "3x3",
+        "result": {
+            "time_left": 105,
+            "moves_left": 6,
+            "moves_used": 11
+        },
+        "date": "04/10/2026 21:58"
+    },
+    {
+        "difficulty": "Easy",
+        "grid_size": "3x3",
+        "result": {
+            "moves": 22
+        },
+        "date": "05/10/2026 01:18"
+    },
+    {
+        "difficulty": "Easy",
+        "grid_size": "3x3",
+        "result": {
+            "moves": 21
+        },
+        "date": "05/10/2026 22:08"
+    }
+]
